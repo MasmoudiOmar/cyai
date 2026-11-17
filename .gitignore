@@ -6,3 +6,10 @@ coverage/
 .env.*
 !.env.example
 .DS_Store
+
+# Local agent tooling (skills, Claude settings) — never committed
+.agents/
+.claude/
+.skills/
+skills-lock.json
+CLAUDE.local.md
