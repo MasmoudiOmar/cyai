@@ -13,3 +13,6 @@ coverage/
 .skills/
 skills-lock.json
 CLAUDE.local.md
+
+# Python bytecode (tools/speech-server)
+__pycache__/

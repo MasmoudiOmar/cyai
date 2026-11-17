@@ -41,9 +41,9 @@ Voice screeners such as Mercor's and micro1's are spoken, and so are cyai's inte
 The browser asks for your microphone once; the setup page checks it before you start. By default the browser does the speech work (best in Chrome or Edge), but browser recognisers send audio to their vendor and drop many fillers. For verbatim transcripts and a better voice, point cyai at OpenAI-compatible speech servers:
 
 ```bash
-# Local servers, e.g. speaches (Whisper + Kokoro); check its docs for model and voice names
-cyai ui --stt-url http://localhost:8000/v1 --stt-model Systran/faster-whisper-small \
-        --tts-url http://localhost:8000/v1 --tts-model <kokoro-model> --tts-voice af_heart
+# The bundled local server (Whisper + Kokoro, on your CPU): see tools/speech-server
+tools/speech-server/setup.sh && ~/.cyai/speech/venv/bin/python tools/speech-server/server.py
+cyai ui --stt-url http://127.0.0.1:8000/v1 --tts-url http://127.0.0.1:8000/v1
 
 # Or OpenAI (audio leaves your computer): uses OPENAI_API_KEY, whisper-1 and tts-1 by default
 cyai ui --stt-url https://api.openai.com/v1 --tts-url https://api.openai.com/v1
