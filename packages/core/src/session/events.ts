@@ -29,18 +29,3 @@ export type TransitionError =
       readonly turnCount: number;
     };
 
-/** The timestamp an event carries, if any. */
-export function eventTime(event: SessionEvent): IsoDateTime | undefined {
-  switch (event.type) {
-    case "start":
-    case "answer":
-    case "finish":
-    case "abandon":
-      return event.at;
-    case "ask":
-      return event.question.askedAt;
-    case "evaluate":
-    case "complete":
-      return undefined;
-  }
-}

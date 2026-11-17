@@ -52,8 +52,11 @@ export const evaluatedTurnSchema = z.strictObject({
 });
 export type EvaluatedTurn = z.infer<typeof evaluatedTurnSchema>;
 
+/** Session identifiers are UUIDs, which also makes them safe as file names. */
+export const sessionIdSchema = z.uuid();
+
 const baseShape = {
-  id: z.uuid(),
+  id: sessionIdSchema,
   interviewId: idSchema,
   profileId: idSchema,
   rubricId: idSchema,

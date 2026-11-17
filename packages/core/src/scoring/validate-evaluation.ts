@@ -1,6 +1,10 @@
-import type { Rubric, TurnEvaluation } from "@cyai/spec";
-
-import { err, ok, type Result } from "../shared/result.js";
+import {
+  err,
+  ok,
+  type Result,
+  type Rubric,
+  type TurnEvaluation,
+} from "@cyai/spec";
 
 export interface EvaluationError {
   readonly code: "unknown_criterion" | "duplicate_criterion";

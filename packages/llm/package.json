@@ -1,0 +1,26 @@
+{
+  "name": "@cyai/llm",
+  "version": "0.0.0",
+  "description": "Model adapters for cyai's standalone mode: Anthropic Claude and any OpenAI-compatible server (Ollama, LM Studio, vLLM...).",
+  "license": "SEE LICENSE IN ../../LICENSE",
+  "type": "module",
+  "sideEffects": false,
+  "files": ["dist"],
+  "exports": {
+    ".": {
+      "@cyai/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "1.9.0",
+    "@cyai/core": "workspace:*",
+    "@cyai/node": "workspace:*",
+    "@cyai/spec": "workspace:*",
+    "zod": "4.6.7"
+  }
+}

@@ -1,7 +1,15 @@
-import type { FollowUpTrigger, InterviewerProfile, IsoDateTime, SessionIn } from "@cyai/spec";
+import {
+  err,
+  ok,
+  type EvaluatedTurn,
+  type FollowUpTrigger,
+  type InterviewerProfile,
+  type IsoDateTime,
+  type Result,
+  type SessionIn,
+} from "@cyai/spec";
 
 import { checkBinding, type BindingMismatch } from "../shared/binding.js";
-import { err, ok, type Result } from "../shared/result.js";
 import { elapsedMs, MS_PER_MINUTE } from "../shared/time.js";
 
 export type NextStep =
@@ -15,6 +23,11 @@ export type NextStep =
   | { readonly kind: "finish"; readonly reason: "question_budget" | "time_budget" };
 
 /** Decides what the interviewer does next, following the profile's turn policy. */
+/** Number of follow-ups already asked about the primary turn at `rootIndex`. */
+export function followUpCount(turns: readonly EvaluatedTurn[], rootIndex: number): number {
+  return turns.filter((turn) => turn.question.followUpOf === rootIndex).length;
+}
+
 export function decideNextStep(
   session: SessionIn<"awaiting_question">,
   profile: InterviewerProfile,
@@ -35,8 +48,7 @@ export function decideNextStep(
     const triggers = last.evaluation.followUpTriggers.filter((trigger) =>
       turnPolicy.followUpTriggers.includes(trigger),
     );
-    const followUps = session.turns.filter((turn) => turn.question.followUpOf === root).length;
-    if (triggers.length > 0 && followUps < turnPolicy.maxFollowUpsPerQuestion) {
+    if (triggers.length > 0 && followUpCount(session.turns, root) < turnPolicy.maxFollowUpsPerQuestion) {
       return ok({ kind: "follow_up", of: root, triggers });
     }
   }

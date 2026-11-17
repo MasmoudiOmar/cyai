@@ -1,4 +1,4 @@
-import { aiTrainerInterview, at, EPOCH_MS, genericProfile, SESSION_ID } from "@cyai/fixtures";
+import { aiTrainerInterview, at, EPOCH_MS, genericProfile, SESSION_ID, unwrap } from "@cyai/fixtures";
 import type {
   AskedQuestion,
   Scorecard,
@@ -9,30 +9,15 @@ import type {
 } from "@cyai/spec";
 
 import type { Clock, IdGenerator } from "../ports/index.js";
+
+export { unwrap, unwrapErr } from "@cyai/fixtures";
 import { createSession } from "../session/create.js";
 import type { SessionEvent } from "../session/events.js";
 import { isIn } from "../session/guards.js";
 import { transition } from "../session/machine.js";
-import type { Result } from "../shared/result.js";
 
 export const fixedClock: Clock = { now: () => new Date(EPOCH_MS) };
 export const fixedIds: IdGenerator = { next: () => SESSION_ID };
-
-/** Returns the success value or fails the test with the error payload. */
-export function unwrap<T, E>(result: Result<T, E>): T {
-  if (!result.ok) {
-    throw new Error(`Expected ok, got ${JSON.stringify(result.error)}`);
-  }
-  return result.value;
-}
-
-/** Returns the error payload or fails the test. */
-export function unwrapErr<T, E>(result: Result<T, E>): E {
-  if (result.ok) {
-    throw new Error(`Expected error, got ${JSON.stringify(result.value)}`);
-  }
-  return result.error;
-}
 
 /** Narrows a session to `status` or fails the test. */
 export function expectStatus<S extends SessionStatus>(session: Session, status: S): SessionIn<S> {

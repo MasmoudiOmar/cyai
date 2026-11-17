@@ -1,16 +1,10 @@
-import { at, evaluation, starRubric } from "@cyai/fixtures";
-import type { Scorecard } from "@cyai/spec";
+import { at, evaluation, scorecardOf } from "@cyai/fixtures";
 import { describe, expect, it } from "vitest";
 
 import { drive, events, expectStatus, newSession, turn, unwrapErr } from "../test-support/drive.js";
 import { transition } from "./machine.js";
 
-const scorecard: Scorecard = {
-  criteria: starRubric.criteria.map((criterion) => ({ criterionId: criterion.id, average: 4, samples: 1 })),
-  overall: 4,
-  passed: true,
-  evaluatedTurns: 1,
-};
+const scorecard = scorecardOf(4);
 
 const oneTurnScored = [events.start(0), ...turn(1, evaluation(4)), events.finish(40)];
 

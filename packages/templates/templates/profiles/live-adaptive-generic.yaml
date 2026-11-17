@@ -1,0 +1,21 @@
+# Conversational AI screener that adapts to your resume and probes weak answers.
+id: live-adaptive-generic
+version: 1
+name: Adaptive AI interviewer (generic)
+description: Live conversational screener that builds questions from your resume and the job description and drills into vague answers.
+format: live
+modalities: [voice, text]
+timing:
+  totalMinutes: 25
+  prepSeconds: 0
+  answer:
+    softSeconds: 120
+    hardSeconds: 180
+turnPolicy:
+  maxQuestions: 6
+  maxFollowUpsPerQuestion: 2
+  followUpTriggers: [vague, no_example, unverified_claim]
+persona:
+  tone: neutral-friendly, concise
+  reactsEmotionally: false
+contextSources: [resume, job_description]

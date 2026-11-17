@@ -1,0 +1,33 @@
+id: technical-explain
+version: 1
+name: Technical explanation
+passThreshold: 3.5
+criteria:
+  - id: correctness
+    label: Technical correctness
+    weight: 0.35
+    levels:
+      - { score: 1, description: "Contains significant technical errors." }
+      - { score: 3, description: "Mostly correct with minor gaps." }
+      - { score: 5, description: "Correct and precise." }
+  - id: reasoning
+    label: Reasoning and approach
+    weight: 0.3
+    levels:
+      - { score: 1, description: "Jumps to an answer without explaining why." }
+      - { score: 3, description: "Explains the approach but skips steps." }
+      - { score: 5, description: "Walks through the approach step by step." }
+  - id: tradeoffs
+    label: Trade-offs and alternatives
+    weight: 0.15
+    levels:
+      - { score: 1, description: "No trade-offs considered." }
+      - { score: 3, description: "Mentions a trade-off in passing." }
+      - { score: 5, description: "Compares alternatives and justifies the choice." }
+  - id: clarity
+    label: Clarity for a listener
+    weight: 0.2
+    levels:
+      - { score: 1, description: "Hard to follow." }
+      - { score: 3, description: "Understandable with effort." }
+      - { score: 5, description: "Clear, structured, appropriate level of detail." }

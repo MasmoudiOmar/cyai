@@ -1,9 +1,8 @@
 import { evaluation, starRubric } from "@cyai/fixtures";
-import type { Rubric, Scorecard, TurnEvaluation } from "@cyai/spec";
+import type { Result, Rubric, Scorecard, TurnEvaluation } from "@cyai/spec";
 import { describe, expect, it } from "vitest";
 
 import { drive, events, expectStatus, turn, unwrap, unwrapErr } from "../test-support/drive.js";
-import type { Result } from "../shared/result.js";
 import { scoreSession, type ScoringError } from "./score-session.js";
 import { validateEvaluation } from "./validate-evaluation.js";
 

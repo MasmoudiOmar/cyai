@@ -1,0 +1,33 @@
+id: behavioral-star
+version: 1
+name: Behavioral (STAR)
+passThreshold: 3.4
+criteria:
+  - id: structure
+    label: Structure (situation, task, action, result)
+    weight: 0.3
+    levels:
+      - { score: 1, description: "No discernible situation, action or result." }
+      - { score: 3, description: "Partial STAR; the result is vague or missing." }
+      - { score: 5, description: "Clear STAR with a concrete, ideally quantified result." }
+  - id: relevance
+    label: Relevance to the role
+    weight: 0.25
+    levels:
+      - { score: 1, description: "Does not address the question or the role." }
+      - { score: 3, description: "Addresses the question but the link to the role is implicit." }
+      - { score: 5, description: "Directly demonstrates a competency the role needs." }
+  - id: specificity
+    label: Specificity and ownership
+    weight: 0.25
+    levels:
+      - { score: 1, description: "Generic statements; \"we\" without a personal contribution." }
+      - { score: 3, description: "Some specifics; personal contribution partly clear." }
+      - { score: 5, description: "Specific details and a clear personal contribution." }
+  - id: delivery
+    label: Concision and use of time
+    weight: 0.2
+    levels:
+      - { score: 1, description: "Rambling, repetitive, or far over the time limit." }
+      - { score: 3, description: "Mostly focused with some filler." }
+      - { score: 5, description: "Concise, well paced, within the time limit." }

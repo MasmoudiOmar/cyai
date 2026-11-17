@@ -59,6 +59,10 @@ export function createConfig({ tsconfigRootDir, pureGlobs = [] }) {
           { considerDefaultExhaustiveForUnions: false, requireDefaultForNonUnion: true },
         ],
         "@typescript-eslint/prefer-readonly": "error",
+        "@typescript-eslint/no-unused-vars": [
+          "error",
+          { ignoreRestSiblings: true, argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+        ],
         "@typescript-eslint/no-shadow": "error",
         "@typescript-eslint/default-param-last": "error",
         "@typescript-eslint/method-signature-style": ["error", "property"],
@@ -66,6 +70,7 @@ export function createConfig({ tsconfigRootDir, pureGlobs = [] }) {
         "no-console": "error",
         "no-param-reassign": "error",
         "prefer-const": "error",
+        "no-duplicate-imports": ["error", { allowSeparateTypeImports: true }],
         "no-shadow": "off",
       },
     },

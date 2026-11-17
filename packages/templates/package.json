@@ -1,0 +1,32 @@
+{
+  "name": "@cyai/templates",
+  "version": "0.0.0",
+  "description": "Built-in cyai interviewer profiles, rubrics and interviews, plus a validating YAML loader.",
+  "license": "SEE LICENSE IN ../../LICENSE",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "templates"
+  ],
+  "exports": {
+    ".": {
+      "@cyai/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@cyai/core": "workspace:*",
+    "@cyai/node": "workspace:*",
+    "@cyai/spec": "workspace:*",
+    "yaml": "2.9.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@cyai/fixtures": "workspace:*"
+  }
+}

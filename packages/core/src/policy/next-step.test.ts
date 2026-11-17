@@ -1,11 +1,10 @@
 import { at, evaluation, genericProfile } from "@cyai/fixtures";
-import type { InterviewerProfile } from "@cyai/spec";
+import type { InterviewerProfile, Result } from "@cyai/spec";
 import { describe, expect, it } from "vitest";
 
 import { drive, events, expectStatus, turn, unwrap, unwrapErr } from "../test-support/drive.js";
 import type { SessionEvent } from "../session/events.js";
 import type { BindingMismatch } from "../shared/binding.js";
-import type { Result } from "../shared/result.js";
 import { decideNextStep, type NextStep } from "./next-step.js";
 
 function nextAfter(

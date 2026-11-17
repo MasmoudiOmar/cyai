@@ -2,7 +2,10 @@ import type {
   InterviewerProfile,
   InterviewSpec,
   IsoDateTime,
+  Result,
   Rubric,
+  Scorecard,
+  SessionIn,
   TurnEvaluation,
 } from "@cyai/spec";
 
@@ -91,5 +94,44 @@ export function evaluation(
     scores: starRubric.criteria.map((criterion) => ({ criterionId: criterion.id, score })),
     followUpTriggers,
     rationale: "Fixture evaluation",
+  };
+}
+
+/** A freshly created session bound to the fixture interview, created `seconds` after the epoch. */
+export function createdSession(id = SESSION_ID, seconds = 0): SessionIn<"created"> {
+  return {
+    status: "created",
+    id,
+    interviewId: aiTrainerInterview.id,
+    profileId: genericProfile.id,
+    rubricId: starRubric.id,
+    answerLimits: genericProfile.timing.answer,
+    createdAt: at(seconds),
+  };
+}
+
+/** Returns the success value or fails the test with the error payload. */
+export function unwrap<T, E>(result: Result<T, E>): T {
+  if (!result.ok) {
+    throw new Error(`Expected ok, got ${JSON.stringify(result.error)}`);
+  }
+  return result.value;
+}
+
+/** Returns the error payload or fails the test. */
+export function unwrapErr<T, E>(result: Result<T, E>): E {
+  if (result.ok) {
+    throw new Error(`Expected an error, got ${JSON.stringify(result.value)}`);
+  }
+  return result.error;
+}
+
+/** A passing scorecard with every fixture criterion averaging `average` over one answer. */
+export function scorecardOf(average = 4): Scorecard {
+  return {
+    criteria: starRubric.criteria.map((criterion) => ({ criterionId: criterion.id, average, samples: 1 })),
+    overall: average,
+    passed: average >= starRubric.passThreshold,
+    evaluatedTurns: 1,
   };
 }

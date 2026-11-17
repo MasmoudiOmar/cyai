@@ -1,0 +1,21 @@
+# Short text-based screening bot.
+id: chat-screener-generic
+version: 1
+name: Chat screener (generic)
+description: Short text screening conversation with brief answers and occasional clarifying follow-ups.
+format: chat
+modalities: [text]
+timing:
+  totalMinutes: 10
+  prepSeconds: 0
+  answer:
+    softSeconds: 60
+    hardSeconds: 120
+turnPolicy:
+  maxQuestions: 5
+  maxFollowUpsPerQuestion: 1
+  followUpTriggers: [vague, off_topic]
+persona:
+  tone: brisk and polite
+  reactsEmotionally: false
+contextSources: [job_description]

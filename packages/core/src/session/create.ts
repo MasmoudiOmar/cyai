@@ -1,8 +1,15 @@
-import type { InterviewerProfile, InterviewSpec, SessionIn } from "@cyai/spec";
+import {
+  err,
+  ok,
+  type InterviewSpec,
+  type InterviewerProfile,
+  type Result,
+  type SessionIn,
+} from "@cyai/spec";
 
 import type { Clock, IdGenerator } from "../ports/index.js";
 import { checkBinding, type BindingMismatch } from "../shared/binding.js";
-import { err, ok, type Result } from "../shared/result.js";
+import { nowIso } from "../shared/time.js";
 
 export interface CreateSessionInput {
   readonly interview: InterviewSpec;
@@ -30,6 +37,6 @@ export function createSession(
     profileId: profile.id,
     rubricId: interview.rubricId,
     answerLimits: profile.timing.answer,
-    createdAt: clock.now().toISOString(),
+    createdAt: nowIso(clock),
   });
 }

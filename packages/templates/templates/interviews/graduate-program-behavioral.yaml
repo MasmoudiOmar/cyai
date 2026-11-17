@@ -1,0 +1,26 @@
+id: graduate-program-behavioral
+version: 1
+role: Graduate Program Candidate
+profileId: async-video-generic
+rubricId: behavioral-star
+competencies: [teamwork, leadership, resilience, motivation]
+questionBank:
+  - kind: fixed
+    id: team-conflict
+    text: Tell us about a time you worked in a team that disagreed. How did you move things forward?
+    competency: teamwork
+  - kind: fixed
+    id: led-without-authority
+    text: Describe a time you led something without having formal authority.
+    competency: leadership
+  - kind: fixed
+    id: setback
+    text: Tell us about a setback you faced and what you did next.
+    competency: resilience
+  - kind: fixed
+    id: why-this-program
+    text: Why this program, and why now?
+    competency: motivation
+  - kind: generated
+    source: job_description
+    count: 1

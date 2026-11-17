@@ -1,0 +1,21 @@
+id: software-engineer-screen
+version: 1
+role: Software Engineer
+profileId: live-adaptive-generic
+rubricId: technical-explain
+competencies: [problem-solving, system-design, code-quality, collaboration]
+questionBank:
+  - kind: fixed
+    id: hardest-bug
+    text: Walk me through the hardest bug you have tracked down. How did you isolate it?
+    competency: problem-solving
+  - kind: fixed
+    id: design-tradeoff
+    text: Describe a design decision where you had to trade one quality for another. What did you choose and why?
+    competency: system-design
+  - kind: generated
+    source: resume
+    count: 2
+  - kind: generated
+    source: job_description
+    count: 1

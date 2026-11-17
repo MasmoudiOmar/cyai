@@ -4,9 +4,13 @@
   "description": "Shared strict TypeScript configuration for cyai packages.",
   "license": "SEE LICENSE IN ../../LICENSE",
   "files": [
-    "base.json"
+    "base.json",
+    "build.json",
+    "node.json"
   ],
   "exports": {
-    "./base.json": "./base.json"
+    "./base.json": "./base.json",
+    "./build.json": "./build.json",
+    "./node.json": "./node.json"
   }
 }

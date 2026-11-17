@@ -1,0 +1,21 @@
+id: ai-trainer-generalist
+version: 1
+role: AI Trainer / Data Annotation Specialist
+profileId: live-adaptive-generic
+rubricId: behavioral-star
+competencies: [guideline-following, written-reasoning, attention-to-detail, domain-expertise]
+questionBank:
+  - kind: fixed
+    id: guideline-disagreement
+    text: Tell me about a time you had to follow a detailed guideline you disagreed with. What did you do?
+    competency: guideline-following
+  - kind: fixed
+    id: catching-errors
+    text: Describe a time you caught an error that others had missed. How did you find it?
+    competency: attention-to-detail
+  - kind: generated
+    source: resume
+    count: 2
+  - kind: generated
+    source: job_description
+    count: 1

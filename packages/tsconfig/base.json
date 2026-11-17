@@ -2,11 +2,15 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
     "target": "ES2023",
-    "lib": ["ES2023"],
+    "lib": [
+      "ES2023"
+    ],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "moduleDetection": "force",
-    "customConditions": ["@cyai/source"],
+    "customConditions": [
+      "@cyai/source"
+    ],
     "verbatimModuleSyntax": true,
     "isolatedModules": true,
     "strict": true,
@@ -25,6 +29,10 @@
     "declarationMap": true,
     "sourceMap": true,
     "skipLibCheck": true,
-    "types": []
-  }
+    "types": [],
+    "noEmit": true
+  },
+  "include": [
+    "${configDir}/src"
+  ]
 }

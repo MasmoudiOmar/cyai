@@ -1,8 +1,15 @@
-import type { CriterionResult, Rubric, Scorecard, SessionIn } from "@cyai/spec";
+import {
+  err,
+  ok,
+  type CriterionResult,
+  type Result,
+  type Rubric,
+  type Scorecard,
+  type SessionIn,
+} from "@cyai/spec";
 
 import { checkBinding, type BindingMismatch } from "../shared/binding.js";
 import { mean, roundScore } from "../shared/math.js";
-import { err, ok, type Result } from "../shared/result.js";
 import { validateEvaluation, type EvaluationError } from "./validate-evaluation.js";
 
 export type ScoringError =

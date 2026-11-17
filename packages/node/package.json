@@ -1,0 +1,28 @@
+{
+  "name": "@cyai/node",
+  "version": "0.0.0",
+  "description": "Node.js adapters for cyai: system clock, UUIDs and a file-based session store.",
+  "license": "SEE LICENSE IN ../../LICENSE",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "@cyai/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@cyai/core": "workspace:*",
+    "@cyai/spec": "workspace:*"
+  },
+  "devDependencies": {
+    "@cyai/fixtures": "workspace:*"
+  }
+}

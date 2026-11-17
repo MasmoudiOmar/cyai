@@ -1,7 +1,23 @@
 {
   "files": [],
   "references": [
-    { "path": "packages/spec/tsconfig.build.json" },
-    { "path": "packages/core/tsconfig.build.json" }
+    {
+      "path": "packages/spec/tsconfig.build.json"
+    },
+    {
+      "path": "packages/core/tsconfig.build.json"
+    },
+    {
+      "path": "packages/node/tsconfig.build.json"
+    },
+    {
+      "path": "packages/templates/tsconfig.build.json"
+    },
+    {
+      "path": "packages/llm/tsconfig.build.json"
+    },
+    {
+      "path": "packages/mcp/tsconfig.build.json"
+    }
   ]
 }
