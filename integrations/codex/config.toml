@@ -1,0 +1,3 @@
+[mcp_servers.cyai]
+command = "node"
+args = ["/absolute/path/to/cyai/packages/cli/dist/bin.js", "mcp"]

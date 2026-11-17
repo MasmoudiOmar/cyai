@@ -1,6 +1,14 @@
-import { describeError, formatDebrief, formatScore, type ModelRequest } from "@cyai/core";
+import {
+  describeError,
+  formatDebrief,
+  formatInterviewTable,
+  formatSessionTable,
+  type InterviewSummary,
+  type ModelRequest,
+  type SessionSummary,
+} from "@cyai/core";
 
-import type { InterviewSummary, Reply, ServiceError, SessionSummary } from "./service.js";
+import type { Reply, ServiceError } from "./service.js";
 import { TOOLS } from "./tool-names.js";
 
 function privateBlock(tag: string, request: ModelRequest): string {
@@ -77,29 +85,12 @@ export function renderError(error: ServiceError): string {
 }
 
 export function renderInterviews(interviews: readonly InterviewSummary[]): string {
-  if (interviews.length === 0) {
-    return "No interviews are installed.";
-  }
-  const rows = interviews.map(
-    (item) =>
-      `| ${item.id} | ${item.role} | ${item.profile} (${item.format}) | ${String(item.totalMinutes)} min | up to ${String(item.maxQuestions)} |`,
-  );
-  return [
-    "| Interview id | Role | Interviewer | Length | Questions |",
-    "|---|---|---|---|---|",
-    ...rows,
-    "",
-    `Call \`${TOOLS.start}\` with an interview id. Passing the candidate's resume and the job description makes questions personal.`,
-  ].join("\n");
+  const listing = formatInterviewTable(interviews);
+  return interviews.length === 0
+    ? listing
+    : `${listing}\n\nCall \`${TOOLS.start}\` with an interview id. Passing the candidate's resume and the job description makes questions personal.`;
 }
 
 export function renderSessions(sessions: readonly SessionSummary[]): string {
-  if (sessions.length === 0) {
-    return "No practice sessions yet.";
-  }
-  const rows = sessions.map(
-    (item) =>
-      `| ${item.sessionId} | ${item.interviewId} | ${item.status} | ${item.createdAt} | ${item.overall === undefined ? "-" : formatScore(item.overall)} |`,
-  );
-  return ["| Session | Interview | Status | Started | Overall |", "|---|---|---|---|---|", ...rows].join("\n");
+  return formatSessionTable(sessions);
 }

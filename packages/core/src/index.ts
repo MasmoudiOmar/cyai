@@ -61,3 +61,12 @@ export type { BindingKind, BindingMismatch } from "./shared/binding.js";
 export { classifyOvertime, elapsedMs, nowIso } from "./shared/time.js";
 export { formatDebrief, formatScore } from "./report/debrief.js";
 export { describeError, type CyaiError } from "./report/describe-error.js";
+export {
+  formatInterviewTable,
+  formatSessionTable,
+  summarizeInterviews,
+  summarizeSession,
+  type InterviewSummary,
+  type SessionSummary,
+} from "./report/summaries.js";
+export { CYAI_VERSION } from "./version.js";

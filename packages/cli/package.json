@@ -1,0 +1,32 @@
+{
+  "name": "cyai",
+  "version": "0.0.0",
+  "description": "CrackYourAIInterview: practise AI-run interviews in your terminal, or serve them to Claude Code, Cursor or any MCP client.",
+  "license": "SEE LICENSE IN ../../LICENSE",
+  "type": "module",
+  "files": ["dist"],
+  "bin": {
+    "cyai": "./dist/bin.js"
+  },
+  "exports": {
+    ".": {
+      "@cyai/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@cyai/core": "workspace:*",
+    "@cyai/llm": "workspace:*",
+    "@cyai/mcp": "workspace:*",
+    "@cyai/node": "workspace:*",
+    "@cyai/spec": "workspace:*",
+    "@cyai/templates": "workspace:*"
+  },
+  "devDependencies": {
+    "@cyai/fixtures": "workspace:*"
+  }
+}

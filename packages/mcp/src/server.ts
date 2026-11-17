@@ -1,3 +1,4 @@
+import { CYAI_VERSION } from "@cyai/core";
 import { turnEvaluationSchema, type Result } from "@cyai/spec";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult, GetPromptResult } from "@modelcontextprotocol/sdk/types.js";
@@ -6,8 +7,6 @@ import { z } from "zod";
 import { renderError, renderInterviews, renderReply, renderSessions } from "./render.js";
 import type { InterviewService, Reply, ServiceError } from "./service.js";
 import { MOCK_INTERVIEW_PROMPT, TOOLS } from "./tool-names.js";
-
-export const SERVER_VERSION = "0.1.0";
 
 const INSTRUCTIONS = [
   "cyai runs mock interviews that simulate AI-run screening interviews. You play the interviewer and evaluator; the user is the candidate.",
@@ -51,7 +50,7 @@ function mockInterviewPrompt(interviewId: string | undefined): GetPromptResult {
 
 /** An MCP server exposing the interview service. The connected agent acts as interviewer. */
 export function createCyaiServer(service: InterviewService): McpServer {
-  const server = new McpServer({ name: "cyai", version: SERVER_VERSION }, { instructions: INSTRUCTIONS });
+  const server = new McpServer({ name: "cyai", version: CYAI_VERSION }, { instructions: INSTRUCTIONS });
 
   server.registerTool(
     TOOLS.listInterviews,

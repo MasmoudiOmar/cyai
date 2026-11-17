@@ -1,14 +1,13 @@
 export { renderError, renderInterviews, renderReply, renderSessions } from "./render.js";
-export { createCyaiServer, SERVER_VERSION } from "./server.js";
+export { createCyaiServer } from "./server.js";
+export { startStdioServer } from "./stdio.js";
 export {
   createInterviewService,
   type InterviewService,
-  type InterviewSummary,
   type Reply,
   type Served,
   type ServiceDeps,
   type ServiceError,
-  type SessionSummary,
   type StartInput,
   type WrongStatus,
 } from "./service.js";

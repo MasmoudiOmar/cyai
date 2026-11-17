@@ -1,9 +1,11 @@
-import { at, evaluation, scorecardOf } from "@cyai/fixtures";
+import { aiTrainerInterview, at, createdSession, evaluation, genericProfile, scorecardOf, starRubric, unwrap } from "@cyai/fixtures";
 import type { EvaluatedTurn } from "@cyai/spec";
 import { describe, expect, it } from "vitest";
 
+import { buildCatalog } from "../catalog/catalog.js";
 import { formatDebrief, formatScore } from "./debrief.js";
 import { describeError, type CyaiError } from "./describe-error.js";
+import { formatInterviewTable, formatSessionTable, summarizeInterviews, summarizeSession } from "./summaries.js";
 
 describe("describeError", () => {
   const cases: readonly [CyaiError, string][] = [
@@ -50,5 +52,28 @@ describe("formatDebrief", () => {
 
   it("formats scores with two decimals", () => {
     expect(formatScore(3.456)).toBe("3.46");
+  });
+});
+
+describe("summaries", () => {
+  it("summarizes interviews with an installed profile", () => {
+    const orphan = { ...aiTrainerInterview, id: "orphan", profileId: "missing-profile" };
+    const catalog = unwrap(
+      buildCatalog({ profiles: [genericProfile], rubrics: [starRubric], interviews: [aiTrainerInterview, orphan] }),
+    );
+    const summaries = summarizeInterviews(catalog);
+    expect(summaries.map((item) => item.id)).toEqual([aiTrainerInterview.id]);
+    expect(formatInterviewTable(summaries)).toContain(
+      "| ai-trainer-generalist | AI Trainer | Adaptive AI Interviewer (generic) (live) | 25 min | up to 2 |",
+    );
+    expect(formatInterviewTable([])).toBe("No interviews are installed.");
+  });
+
+  it("summarizes sessions, with the overall score once completed", () => {
+    const created = summarizeSession({ session: createdSession(), candidate: {} });
+    expect(created).not.toHaveProperty("overall");
+    expect(formatSessionTable([created])).toContain(`| created | ${at(0)} | - |`);
+    expect(formatSessionTable([{ ...created, status: "completed", overall: 3.456 }])).toContain("| 3.46 |");
+    expect(formatSessionTable([])).toBe("No practice sessions yet.");
   });
 });

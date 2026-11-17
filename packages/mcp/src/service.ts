@@ -9,15 +9,19 @@ import {
   provideQuestion,
   resolveInterview,
   submitEvaluation,
+  summarizeInterviews,
+  summarizeSession,
   nowIso,
   type CatalogError,
   type Clock,
   type FlowError,
   type IdGenerator,
   type InterviewContext,
+  type InterviewSummary,
   type ModelRequest,
   type Progress,
   type SessionStore,
+  type SessionSummary,
   type StoreError,
   type TemplateCatalog,
 } from "@cyai/core";
@@ -72,23 +76,6 @@ export type Reply =
       readonly turns: readonly EvaluatedTurn[];
     }
   | { readonly kind: "abandoned"; readonly sessionId: string; readonly reason: string };
-
-export interface InterviewSummary {
-  readonly id: string;
-  readonly role: string;
-  readonly profile: string;
-  readonly format: string;
-  readonly totalMinutes: number;
-  readonly maxQuestions: number;
-}
-
-export interface SessionSummary {
-  readonly sessionId: string;
-  readonly interviewId: string;
-  readonly status: SessionStatus;
-  readonly createdAt: string;
-  readonly overall?: number;
-}
 
 export interface StartInput {
   readonly interviewId: string;
@@ -194,36 +181,11 @@ export function createInterviewService(deps: ServiceDeps): InterviewService {
   };
 
   return {
-    listInterviews: (): readonly InterviewSummary[] =>
-      [...deps.catalog.interviews.values()].flatMap((interview) => {
-        const profile = deps.catalog.profiles.get(interview.profileId);
-        return profile === undefined
-          ? []
-          : [
-              {
-                id: interview.id,
-                role: interview.role,
-                profile: profile.name,
-                format: profile.format,
-                totalMinutes: profile.timing.totalMinutes,
-                maxQuestions: profile.turnPolicy.maxQuestions,
-              },
-            ];
-      }),
+    listInterviews: () => summarizeInterviews(deps.catalog),
 
     listSessions: async (): Served<readonly SessionSummary[]> => {
       const records = await deps.store.list();
-      return records.ok
-        ? ok(
-            records.value.map(({ session }) => ({
-              sessionId: session.id,
-              interviewId: session.interviewId,
-              status: session.status,
-              createdAt: session.createdAt,
-              ...(isIn(session, "completed") ? { overall: session.scorecard.overall } : {}),
-            })),
-          )
-        : records;
+      return records.ok ? ok(records.value.map(summarizeSession)) : records;
     },
 
     start: async (input: StartInput): Served<Reply> => {

@@ -5,7 +5,9 @@
   "license": "SEE LICENSE IN ../../LICENSE",
   "type": "module",
   "sideEffects": false,
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "bin": {
     "cyai-mcp": "./dist/bin.js"
   },
@@ -14,6 +16,9 @@
       "@cyai/source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./test-support": {
+      "@cyai/source": "./src/test-support/harness.ts"
     }
   },
   "scripts": {
