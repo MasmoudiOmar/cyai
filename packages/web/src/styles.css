@@ -33,7 +33,10 @@
   --radius-lg: 22px;
   --radius: 16px;
   --radius-sm: 11px;
-  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  /* Strong curves: ease-out for entrances and feedback, ease-in-out for on-screen movement. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --press: scale(0.97);
   color-scheme: dark;
 }
 
@@ -248,7 +251,7 @@ textarea {
   color: var(--text-2);
   font-size: 0.9rem;
   font-weight: 500;
-  transition: color 160ms var(--ease), background 160ms var(--ease);
+  transition: color 160ms ease, background 160ms ease;
 }
 
 .nav a:hover {
@@ -289,7 +292,7 @@ textarea {
   flex: 1;
   padding-top: 2.5rem;
   padding-bottom: 5rem;
-  animation: rise 520ms var(--ease) both;
+  animation: rise 280ms var(--ease-out) both;
 }
 
 .footer {
@@ -332,10 +335,10 @@ textarea {
   white-space: nowrap;
   cursor: pointer;
   transition:
-    transform 160ms var(--ease),
-    box-shadow 160ms var(--ease),
-    background 160ms var(--ease),
-    opacity 160ms var(--ease);
+    transform 160ms var(--ease-out),
+    box-shadow 160ms ease,
+    background 160ms ease,
+    opacity 160ms ease;
 }
 
 .button:disabled {
@@ -350,8 +353,12 @@ textarea {
 }
 
 .button.primary:not(:disabled):hover {
-  transform: translateY(-1px);
   box-shadow: 0 16px 36px -12px rgb(170 110 255 / 85%);
+}
+
+.button:not(:disabled):active,
+.pill.upload:active {
+  transform: var(--press);
 }
 
 .button.ghost {
@@ -375,11 +382,25 @@ textarea {
 }
 
 .button svg {
-  transition: transform 160ms var(--ease);
+  transition: transform 160ms var(--ease-out);
 }
 
-.button:not(:disabled):hover svg.icon-arrow {
-  transform: translateX(3px);
+.pill.upload {
+  transition: transform 160ms var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .button:not(:disabled):hover svg.icon-arrow {
+    transform: translateX(3px);
+  }
+
+  .interview-card:hover {
+    transform: translateY(-4px);
+  }
+
+  .interview-card:hover .go svg {
+    transform: translateX(4px);
+  }
 }
 
 .pill {
@@ -483,7 +504,7 @@ textarea {
   border-radius: var(--radius);
   background: var(--danger-soft);
   color: var(--text);
-  animation: rise 320ms var(--ease) both;
+  animation: rise 320ms var(--ease-out) both;
 }
 
 .notice svg {
@@ -660,15 +681,19 @@ textarea {
   height: 100%;
   padding: 1.5rem;
   transition:
-    transform 220ms var(--ease),
-    border-color 220ms var(--ease),
-    box-shadow 220ms var(--ease);
+    transform 200ms var(--ease-out),
+    border-color 200ms ease,
+    box-shadow 200ms ease;
 }
 
 .interview-card:hover {
-  transform: translateY(-4px);
   border-color: var(--border-strong);
   box-shadow: var(--shadow-lift);
+}
+
+.interview-card:active {
+  transform: scale(0.985);
+  transition-duration: 120ms;
 }
 
 .interview-card h3 {
@@ -694,13 +719,9 @@ textarea {
   font-weight: 600;
 }
 
-.interview-card:hover .go svg {
-  transform: translateX(4px);
-}
-
 .interview-card .go svg {
   color: var(--accent);
-  transition: transform 220ms var(--ease);
+  transition: transform 220ms var(--ease-out);
 }
 
 .card-top {
@@ -724,7 +745,7 @@ textarea {
   align-items: center;
   gap: 1rem;
   padding: 0.95rem 1.25rem;
-  transition: background 160ms var(--ease);
+  transition: background 160ms ease;
 }
 
 .session-row:hover {
@@ -771,7 +792,19 @@ textarea {
 
 .ring-value {
   stroke-linecap: round;
-  transition: stroke-dashoffset 900ms var(--ease);
+  transition: stroke-dashoffset 600ms var(--ease-out);
+}
+
+/* The debrief score is a rare, earned moment: let it fill. */
+.result .ring-value {
+  animation: ring-fill 1100ms var(--ease-out) 120ms both;
+}
+
+/* The clock ticks every 250 ms; linear steps of the same length read as one smooth sweep. */
+.timer .ring-value {
+  transition:
+    stroke-dashoffset 250ms linear,
+    stroke 300ms ease;
 }
 
 .ring-label {
@@ -892,8 +925,8 @@ textarea {
   border-radius: var(--radius);
   background: var(--surface-2);
   transition:
-    border-color 160ms var(--ease),
-    background 160ms var(--ease);
+    border-color 160ms ease,
+    background 160ms ease;
 }
 
 .drop-box.dragging {
@@ -1021,6 +1054,10 @@ textarea {
   font-size: 0.9rem;
 }
 
+.room .prompt {
+  animation: focus-in 320ms var(--ease-out) both;
+}
+
 .timer {
   display: grid;
   justify-items: center;
@@ -1119,7 +1156,7 @@ textarea {
   background: color-mix(in srgb, var(--bg) 70%, transparent);
   backdrop-filter: blur(6px);
   text-align: center;
-  animation: fade 240ms var(--ease) both;
+  animation: fade 240ms var(--ease-out) both;
 }
 
 .orb {
@@ -1228,8 +1265,20 @@ textarea {
   height: 100%;
   border-radius: inherit;
   background: var(--gradient);
-  animation: grow 900ms var(--ease) both;
+  animation: grow 700ms var(--ease-out) 180ms both;
   transform-origin: left;
+}
+
+.criteria li:nth-child(2) .bar span {
+  animation-delay: 240ms;
+}
+
+.criteria li:nth-child(3) .bar span {
+  animation-delay: 285ms;
+}
+
+.criteria li:nth-child(n + 4) .bar span {
+  animation-delay: 315ms;
 }
 
 .turns {
@@ -1278,11 +1327,15 @@ textarea {
 }
 
 .turn summary svg {
-  transition: transform 200ms var(--ease);
+  transition: transform 200ms var(--ease-out);
 }
 
 .turn details[open] summary svg {
   transform: rotate(90deg);
+}
+
+.turn details[open] > :not(summary) {
+  animation: fade 200ms ease both;
 }
 
 .turn blockquote {
@@ -1359,18 +1412,61 @@ textarea {
   }
 }
 
+@keyframes focus-in {
+  from {
+    opacity: 0;
+    filter: blur(4px);
+    transform: translateY(4px);
+  }
+}
+
+@keyframes ring-fill {
+  from {
+    stroke-dashoffset: 1;
+  }
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
 @keyframes grow {
   from {
     transform: scaleX(0);
   }
 }
 
+/* Reduced motion: no movement, but keep the fades and colour changes that explain what happened. */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation: none !important;
-    transition: none !important;
+  .content,
+  .notice,
+  .room .prompt,
+  .turn details[open] > :not(summary) {
+    animation: fade 200ms ease both;
+  }
+
+  .orb {
+    animation-name: pulse;
+  }
+
+  .preview,
+  .bar span,
+  .result .ring-value {
+    animation: none;
+  }
+
+  .skeleton {
+    animation: pulse 1.6s ease infinite;
+  }
+
+  :root {
+    --press: none;
+  }
+
+  .interview-card:active {
+    transform: none;
   }
 }
 

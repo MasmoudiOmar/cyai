@@ -16,7 +16,6 @@ interface RingProps {
 export function Ring({ progress, size, stroke, gradient = false, className = "", children }: RingProps): JSX.Element {
   const id = useId();
   const radius = (size - stroke) / 2;
-  const circumference = 2 * Math.PI * radius;
   const clamped = Math.min(1, Math.max(0, progress));
   return (
     <span className={`ring ${className}`.trim()}>
@@ -39,8 +38,10 @@ export function Ring({ progress, size, stroke, gradient = false, className = "",
           fill="none"
           stroke={gradient ? `url(#${id})` : "currentColor"}
           strokeWidth={stroke}
-          strokeDasharray={circumference}
-          style={{ strokeDashoffset: circumference * (1 - clamped) }}
+          // A unit path length lets CSS animate the fill without knowing the circle's size.
+          pathLength={1}
+          strokeDasharray={1}
+          style={{ strokeDashoffset: 1 - clamped }}
         />
       </svg>
       <span className="ring-label">{children}</span>
