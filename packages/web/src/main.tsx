@@ -8,12 +8,14 @@ import { createRoot } from "react-dom/client";
 import { createApiClient } from "./api.js";
 import { App } from "./App.js";
 import "./styles.css";
+import { createBrowserVoice } from "./voice/browser.js";
 
 const root = document.getElementById("root");
 if (root !== null) {
+  const api = createApiClient();
   createRoot(root).render(
     <StrictMode>
-      <App api={createApiClient()} />
+      <App api={api} createVoice={(info) => createBrowserVoice(api, info)} />
     </StrictMode>,
   );
 }

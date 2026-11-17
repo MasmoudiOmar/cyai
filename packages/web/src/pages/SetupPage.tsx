@@ -5,10 +5,29 @@ import type { ApiClient } from "../api.js";
 import { DropField } from "../components/DropField.js";
 import { Arrow, Icon, type IconName } from "../components/Icon.js";
 import { Loading } from "../components/Loading.js";
-import { Notice } from "../components/Notice.js";
-import { FORMATS, formatSeconds } from "../format.js";
+import { Notice, Skeleton } from "../components/Notice.js";
+import { SystemCheck } from "../components/SystemCheck.js";
+import { formatOf, formatSeconds } from "../format.js";
 import { hrefFor, navigate } from "../route.js";
 import { useLoad } from "../use-load.js";
+import type { VoiceIO } from "../voice/io.js";
+
+function spoken(interview: InterviewSummary): boolean {
+  return interview.turnTaking.answer === "spoken";
+}
+
+/** How a turn ends, in the candidate's words. */
+function turnRule(interview: InterviewSummary): string {
+  const { turnTaking } = interview;
+  switch (turnTaking.endOfTurn) {
+    case "silence":
+      return `The interviewer asks out loud and moves on when you pause for ${String(turnTaking.endSilenceSeconds)} seconds. Stay silent too long and it checks in.`;
+    case "timer":
+      return "The question is read out, then your answer is recorded until the window closes or you click Done.";
+    case "submit":
+      return "Type your answers and submit each one.";
+  }
+}
 
 function timing(interview: InterviewSummary): string {
   const answer = `aim for ${formatSeconds(interview.softSeconds)} per answer, cut off at ${formatSeconds(interview.hardSeconds)}`;
@@ -16,11 +35,14 @@ function timing(interview: InterviewSummary): string {
 }
 
 function Brief({ interview }: { readonly interview: InterviewSummary }): JSX.Element {
-  const format = FORMATS[interview.format];
+  const format = formatOf(interview);
   const expectations: readonly [IconName, string, string][] = [
     ["clock", `${String(interview.totalMinutes)} minutes`, "The length of the real screen."],
     ["questions", `Up to ${String(interview.maxQuestions)} questions`, "Vague answers get follow-ups, as they would live."],
     ["hourglass", "Timed answers", timing(interview)],
+    spoken(interview)
+      ? ["speaker", "Spoken answers", `${turnRule(interview)} Pace, fillers and pauses are scored.`]
+      : ["chat", "Typed answers", turnRule(interview)],
     ["spark", "Scored debrief", "Every answer is graded against the interviewer’s rubric."],
   ];
   return (
@@ -48,7 +70,24 @@ function Brief({ interview }: { readonly interview: InterviewSummary }): JSX.Ele
   );
 }
 
-function SetupForm({ api, interview }: { readonly api: ApiClient; readonly interview: InterviewSummary }): JSX.Element {
+interface SetupProps {
+  readonly api: ApiClient;
+  /** Audio for spoken interviews; undefined until the server has said what it offers. */
+  readonly voice: VoiceIO | undefined;
+}
+
+function AudioCheck({ voice, onReady }: { readonly voice: VoiceIO | undefined; readonly onReady: () => void }): JSX.Element {
+  return (
+    <>
+      <h2 className="display">Check your audio</h2>
+      <p className="muted">This interview is spoken, like the real one. Test your microphone before you start.</p>
+      {voice === undefined ? <Skeleton label="Connecting your audio" count={1} /> : <SystemCheck voice={voice} onReady={onReady} />}
+    </>
+  );
+}
+
+function SetupForm({ api, voice, interview }: SetupProps & { readonly interview: InterviewSummary }): JSX.Element {
+  const [audioReady, setAudioReady] = useState(!spoken(interview));
   const [resume, setResume] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [busy, setBusy] = useState(false);
@@ -89,9 +128,17 @@ function SetupForm({ api, interview }: { readonly api: ApiClient; readonly inter
             <Icon name="lock" size={15} />
             Stored on this computer only. The interviewer model sees what it needs to ask and grade.
           </p>
+          {spoken(interview) ? (
+            <AudioCheck
+              voice={voice}
+              onReady={() => {
+                setAudioReady(true);
+              }}
+            />
+          ) : null}
           {error === undefined ? null : <Notice message={error} />}
-          <button type="button" className="button primary large block" disabled={busy} onClick={start}>
-            {busy ? "Preparing your interview…" : "Start interview"} <Arrow />
+          <button type="button" className="button primary large block" disabled={busy || !audioReady} onClick={start}>
+            {busy ? "Preparing your interview…" : audioReady ? "Start interview" : "Test your microphone to start"} <Arrow />
           </button>
         </section>
       </div>
@@ -99,7 +146,7 @@ function SetupForm({ api, interview }: { readonly api: ApiClient; readonly inter
   );
 }
 
-export function SetupPage({ api, interviewId }: { readonly api: ApiClient; readonly interviewId: string }): JSX.Element {
+export function SetupPage({ api, voice, interviewId }: SetupProps & { readonly interviewId: string }): JSX.Element {
   const interviews = useLoad("interviews", api.interviews);
   return (
     <Loading loadable={interviews.current} label="Loading interview" onRetry={interviews.reload}>
@@ -108,7 +155,7 @@ export function SetupPage({ api, interviewId }: { readonly api: ApiClient; reado
         return interview === undefined ? (
           <Notice message={`There is no interview "${interviewId}".`} />
         ) : (
-          <SetupForm api={api} interview={interview} />
+          <SetupForm api={api} voice={voice} interview={interview} />
         );
       }}
     </Loading>

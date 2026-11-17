@@ -43,8 +43,58 @@ export const deliveryMetricsSchema = z.strictObject({
   pauseCount: z.int().nonnegative(),
   longestPauseMs: milliseconds,
   latencyMs: milliseconds,
+  /** From the end of the question to the last word: what the interviewer's clock counts. */
+  durationMs: milliseconds,
   /** Share of the answer spent speaking rather than pausing, 0 to 1. */
   speakingShare: z.number().min(0).max(1),
   transcriber: transcriberSchema,
 });
 export type DeliveryMetrics = z.infer<typeof deliveryMetricsSchema>;
+
+/** A word as spoken, lower-cased, with where it sits in the transcript. */
+export interface SpokenWord {
+  readonly word: string;
+  readonly start: number;
+  readonly end: number;
+}
+
+export function spokenWords(text: string): SpokenWord[] {
+  return [...text.matchAll(/[\p{L}\p{N}']+/gu)].map((match) => ({
+    word: match[0].toLowerCase(),
+    start: match.index,
+    end: match.index + match[0].length,
+  }));
+}
+
+/** Hesitation sounds, however many letters a transcriber gives them ("ummm", "uhh"). */
+const SOUND_FILLERS: readonly (readonly [string, RegExp])[] = [
+  ["um", /^u+m+$/],
+  ["uh", /^u+h+$/],
+  ["er", /^e+r+m*$/],
+  ["ah", /^a+h+$/],
+  ["hmm", /^h+m+$/],
+  ["mm", /^m{2,}$/],
+];
+
+/** Two-word phrases that are almost always verbal padding in an answer. */
+const PHRASE_FILLERS: readonly (readonly [string, string])[] = [
+  ["you", "know"],
+  ["i", "mean"],
+];
+
+export interface Filler {
+  /** The filler's normal spelling, e.g. "um" or "you know". */
+  readonly word: string;
+  /** How many words it spans, ending at the word it was found at. */
+  readonly words: 1 | 2;
+}
+
+/** The filler ending at `word`, given the word spoken before it. */
+export function fillerAt(previous: string | undefined, word: string): Filler | undefined {
+  const sound = SOUND_FILLERS.find(([, pattern]) => pattern.test(word));
+  if (sound !== undefined) {
+    return { word: sound[0], words: 1 };
+  }
+  const phrase = PHRASE_FILLERS.find(([first, last]) => first === previous && last === word);
+  return phrase === undefined ? undefined : { word: phrase.join(" "), words: 2 };
+}

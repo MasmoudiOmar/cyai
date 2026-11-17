@@ -15,6 +15,7 @@ const delivery: DeliveryMetrics = {
   pauseCount: 3,
   longestPauseMs: 4_250,
   latencyMs: 1_800,
+  durationMs: 50_000,
   speakingShare: 0.874,
   transcriber: "whisper",
 };

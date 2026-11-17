@@ -3,7 +3,8 @@ import { useCallback, useEffect, useRef, useState, type JSX, type KeyboardEvent 
 
 import { wordCount } from "../format.js";
 import { useElapsedSeconds } from "../use-elapsed.js";
-import { Arrow, Icon } from "./Icon.js";
+import { Arrow } from "./Icon.js";
+import { EndButton, FollowUpPill, RoomHeader, Thinking } from "./Room.js";
 import { Timer, timerState } from "./Timer.js";
 
 interface QuestionCardProps {
@@ -11,16 +12,6 @@ interface QuestionCardProps {
   readonly busy: boolean;
   readonly onSubmit: (answer: string) => void;
   readonly onStop: () => void;
-}
-
-function Steps({ number, total }: { readonly number: number; readonly total: number }): JSX.Element {
-  return (
-    <span className="steps" aria-hidden="true">
-      {Array.from({ length: Math.max(total, number) }, (_, index) => (
-        <span key={index} className={index + 1 < number ? "done" : index + 1 === number ? "current" : ""} />
-      ))}
-    </span>
-  );
 }
 
 /** The interview room for one question: the prompt, the interviewer's clock and the answer box. */
@@ -65,20 +56,11 @@ export function QuestionCard({ view, busy, onSubmit, onStop }: QuestionCardProps
 
   return (
     <div className="room">
-      <header className="room-head">
-        <p className="eyebrow">
-          {view.role} · Question {view.number} of up to {view.maxQuestions}
-        </p>
-        <Steps number={view.number} total={view.maxQuestions} />
-      </header>
+      <RoomHeader view={view} />
 
       <section className="card pad stage" aria-labelledby="question-text">
         <div className="prompt">
-          {view.followUp ? (
-            <span className="pill accent">
-              <Icon name="spark" size={14} /> Follow-up
-            </span>
-          ) : null}
+          <FollowUpPill view={view} />
           <h1 id="question-text" className="display">
             {view.text}
           </h1>
@@ -107,23 +89,12 @@ export function QuestionCard({ view, busy, onSubmit, onStop }: QuestionCardProps
             {words} {words === 1 ? "word" : "words"} · <span className="kbd">Ctrl</span> + <span className="kbd">Enter</span> to
             submit
           </span>
-          <button type="button" className="button ghost" disabled={busy} onClick={onStop}>
-            <Icon name="stop" size={16} /> End interview
-          </button>
+          <EndButton busy={busy} onStop={onStop} />
           <button type="button" className="button primary" disabled={!canSubmit} onClick={submit}>
             {busy ? "Evaluating…" : "Submit answer"} <Arrow />
           </button>
         </div>
-        {busy ? (
-          <div className="thinking" role="status">
-            <span className="orb" />
-            <p>
-              <strong>Your interviewer is evaluating your answer</strong>
-              <br />
-              <span className="muted">The next question follows in a moment.</span>
-            </p>
-          </div>
-        ) : null}
+        {busy ? <Thinking /> : null}
       </section>
     </div>
   );

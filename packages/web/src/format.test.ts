@@ -1,6 +1,18 @@
 import { describe, expect, it } from "vitest";
 
-import { FORMATS, formatDate, formatScore, formatSeconds, humanize, isOpen, scoreTone, statusLabel, wordCount } from "./format.js";
+import {
+  FORMATS,
+  formatDate,
+  formatOf,
+  formatScore,
+  formatSeconds,
+  humanize,
+  isOpen,
+  scoreTone,
+  statusLabel,
+  wordCount,
+} from "./format.js";
+import { interview, spokenInterview } from "./test-support/views.js";
 
 describe("format", () => {
   it("formats scores, durations, dates, statuses and word counts", () => {
@@ -21,5 +33,13 @@ describe("format", () => {
     expect([scoreTone(4), scoreTone(3.9), scoreTone(3), scoreTone(2.9)]).toEqual(["high", "mid", "mid", "low"]);
     expect(FORMATS.async.icon).toBe("video");
     expect(humanize("graduate-program-behavioral")).toBe("Graduate program behavioral");
+  });
+});
+
+describe("formatOf", () => {
+  it("shows a microphone only for live interviews answered out loud", () => {
+    expect(formatOf(interview).icon).toBe("chat");
+    expect(formatOf(spokenInterview).icon).toBe("live");
+    expect(formatOf({ ...interview, format: "async" })).toEqual({ label: "Async video screen", icon: "video" });
   });
 });

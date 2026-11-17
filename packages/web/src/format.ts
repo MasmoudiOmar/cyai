@@ -57,6 +57,12 @@ export const FORMATS: Readonly<Record<InterviewSummary["format"], FormatInfo>> =
   chat: { label: "Chat screener", icon: "chat" },
 };
 
+/** The label and icon for an interview; a live interview answered in writing gets no microphone. */
+export function formatOf(interview: Pick<InterviewSummary, "format" | "turnTaking">): FormatInfo {
+  const info = FORMATS[interview.format];
+  return interview.format === "live" && interview.turnTaking.answer === "typed" ? { ...info, icon: "chat" } : info;
+}
+
 /** "graduate-program-behavioral" → "Graduate program behavioral", for sessions whose interview is gone. */
 export function humanize(id: string): string {
   const words = id.replace(/-/g, " ");

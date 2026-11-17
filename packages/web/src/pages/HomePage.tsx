@@ -6,7 +6,7 @@ import { Arrow, Icon } from "../components/Icon.js";
 import { Loading } from "../components/Loading.js";
 import { Ring } from "../components/ScoreRing.js";
 import { SessionList } from "../components/SessionList.js";
-import { FORMATS, formatScore, humanize, isOpen } from "../format.js";
+import { formatOf, formatScore, humanize, isOpen } from "../format.js";
 import { hrefFor } from "../route.js";
 import { useLoad } from "../use-load.js";
 
@@ -78,7 +78,7 @@ function InterviewCards({ interviews }: { readonly interviews: readonly Intervie
   return (
     <ul className="interview-grid">
       {interviews.map((interview) => {
-        const format = FORMATS[interview.format];
+        const format = formatOf(interview);
         return (
           <li key={interview.id}>
             <a className="card interview-card" href={hrefFor({ page: "setup", interviewId: interview.id })}>
@@ -93,6 +93,15 @@ function InterviewCards({ interviews }: { readonly interviews: readonly Intervie
                 <span className="muted">{interview.profile}</span>
               </span>
               <span className="meta">
+                {interview.turnTaking.answer === "spoken" ? (
+                  <span className="pill accent">
+                    <Icon name="speaker" size={14} /> Spoken
+                  </span>
+                ) : (
+                  <span className="pill">
+                    <Icon name="chat" size={14} /> Typed
+                  </span>
+                )}
                 <span className="pill">
                   <Icon name="clock" size={14} /> {interview.totalMinutes} min
                 </span>

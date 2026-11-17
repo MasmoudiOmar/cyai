@@ -20,6 +20,8 @@ const PATHS = {
   check: "M5 12.5l4.5 4.5L19 7.5",
   target: "M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0ZM16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0ZM12 12h.01",
   trophy: "M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4ZM17 6h3a3 3 0 0 1-3 4M7 6H4a3 3 0 0 0 3 4",
+  speaker: "M11 5 6 9H3v6h3l5 4V5ZM15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13",
+  captions: "M3 5h18v14H3zM7 10h4M7 14h7M14 10h3",
   logo: "M8 9.5A4.5 4.5 0 1 0 8 15M13 9l2.5 3.5L18 9M15.5 12.5V16",
 } as const;
 

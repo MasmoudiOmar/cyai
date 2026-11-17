@@ -1,34 +1,6 @@
-import type { DeliveryMetrics, FillerCount, SpeechMeasurement } from "@cyai/spec";
-
-/** Hesitation sounds, however many letters a transcriber gives them ("ummm", "uhh"). */
-const SOUND_FILLERS: readonly (readonly [string, RegExp])[] = [
-  ["um", /^u+m+$/],
-  ["uh", /^u+h+$/],
-  ["er", /^e+r+m*$/],
-  ["ah", /^a+h+$/],
-  ["hmm", /^h+m+$/],
-  ["mm", /^m{2,}$/],
-];
-
-/** Phrases that are almost always verbal padding in an answer. */
-const PHRASE_FILLERS: readonly (readonly [string, string])[] = [
-  ["you know", "know"],
-  ["i mean", "mean"],
-];
+import { fillerAt, spokenWords, type DeliveryMetrics, type FillerCount, type SpeechMeasurement } from "@cyai/spec";
 
 const MS_PER_MINUTE = 60_000;
-
-function tokens(text: string): string[] {
-  return text.toLowerCase().match(/[\p{L}\p{N}']+/gu) ?? [];
-}
-
-function soundFiller(token: string): string | undefined {
-  return SOUND_FILLERS.find(([, pattern]) => pattern.test(token))?.[0];
-}
-
-function phraseFiller(previous: string | undefined, token: string): string | undefined {
-  return PHRASE_FILLERS.find(([phrase, last]) => last === token && phrase === `${previous ?? ""} ${token}`)?.[0];
-}
 
 function perMinute(count: number, ms: number): number {
   return ms === 0 ? 0 : Math.round((count / (ms / MS_PER_MINUTE)) * 10) / 10;
@@ -36,15 +8,15 @@ function perMinute(count: number, ms: number): number {
 
 /** How a spoken answer was delivered: pace, fillers, repetitions and pauses. */
 export function analyzeDelivery(text: string, speech: SpeechMeasurement): DeliveryMetrics {
-  const words = tokens(text);
+  const words = spokenWords(text).map((spoken) => spoken.word);
   const fillers = new Map<string, number>();
   let repetitions = 0;
-  words.forEach((token, index) => {
+  words.forEach((word, index) => {
     const previous = words[index - 1];
-    const filler = soundFiller(token) ?? phraseFiller(previous, token);
+    const filler = fillerAt(previous, word);
     if (filler !== undefined) {
-      fillers.set(filler, (fillers.get(filler) ?? 0) + 1);
-    } else if (token === previous) {
+      fillers.set(filler.word, (fillers.get(filler.word) ?? 0) + 1);
+    } else if (word === previous) {
       repetitions += 1;
     }
   });
@@ -61,6 +33,7 @@ export function analyzeDelivery(text: string, speech: SpeechMeasurement): Delive
     pauseCount: speech.pauses.length,
     longestPauseMs: Math.max(0, ...speech.pauses.map((pause) => pause.ms)),
     latencyMs: speech.latencyMs,
+    durationMs: speech.latencyMs + answerMs,
     speakingShare: answerMs === 0 ? 0 : Math.round((speech.speechMs / answerMs) * 100) / 100,
     transcriber: speech.transcriber,
   };

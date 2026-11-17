@@ -71,7 +71,9 @@ export function answerQuestion(
   delivery?: DeliveryMetrics,
 ): Step<"awaiting_evaluation"> {
   return stamped(session, at, () => {
-    const duration = elapsedMs(session.pending.askedAt, at);
+    // A spoken answer lasts from the end of the question to the last word, as the interviewer
+    // times it; wall time would also count the question being read and the transcription.
+    const duration = delivery?.durationMs ?? elapsedMs(session.pending.askedAt, at);
     return {
       ...startedOf(session),
       status: "awaiting_evaluation",

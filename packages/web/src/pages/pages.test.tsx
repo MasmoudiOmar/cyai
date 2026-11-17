@@ -8,6 +8,7 @@ import { App } from "../App.js";
 import { deferred } from "../test-support/deferred.js";
 import "../test-support/dom.js";
 import { abandoned, completed, fakeApi, interview, question, session } from "../test-support/views.js";
+import { fakeVoice } from "../test-support/voice.js";
 import { HistoryPage } from "./HistoryPage.js";
 import { HomePage } from "./HomePage.js";
 import { SessionPage } from "./SessionPage.js";
@@ -87,7 +88,7 @@ describe("HistoryPage", () => {
 describe("SetupPage", () => {
   it("explains the interview and starts it with the candidate's context", async () => {
     const start = vi.fn<(input: StartPractice) => Promise<Result<PracticeView, string>>>().mockResolvedValue(ok(question));
-    render(<SetupPage api={fakeApi({ start })} interviewId="ai-trainer-generalist" />);
+    render(<SetupPage api={fakeApi({ start })} voice={undefined} interviewId="ai-trainer-generalist" />);
     expect(await screen.findByText("No prep time: aim for 1:00 per answer, cut off at 1:30")).toBeDefined();
     fireEvent.change(screen.getByLabelText("Resume"), { target: { value: "Annotator" } });
     fireEvent.change(screen.getByLabelText("Job description"), { target: { value: "Rank outputs." } });
@@ -104,7 +105,7 @@ describe("SetupPage", () => {
       interviews: () => Promise.resolve(ok([{ ...interview, prepSeconds: 30 }])),
       start: () => Promise.resolve(err("No API key.")),
     });
-    render(<SetupPage api={api} interviewId="ai-trainer-generalist" />);
+    render(<SetupPage api={api} voice={undefined} interviewId="ai-trainer-generalist" />);
     expect(await screen.findByText("30s to prepare, then aim for 1:00 per answer, cut off at 1:30")).toBeDefined();
     fireEvent.click(screen.getByRole("button", { name: /Start interview/ }));
     expect(await screen.findByText("No API key.")).toBeDefined();
@@ -112,7 +113,7 @@ describe("SetupPage", () => {
   });
 
   it("reports unknown interviews", async () => {
-    render(<SetupPage api={fakeApi()} interviewId="nope" />);
+    render(<SetupPage api={fakeApi()} voice={undefined} interviewId="nope" />);
     expect(await screen.findByText('There is no interview "nope".')).toBeDefined();
   });
 });
@@ -120,7 +121,7 @@ describe("SetupPage", () => {
 describe("SessionPage", () => {
   it("takes answers until the debrief", async () => {
     const pending = deferred<Result<PracticeView, string>>();
-    render(<SessionPage api={fakeApi({ answer: () => pending.promise })} sessionId={SESSION_ID} />);
+    render(<SessionPage voice={undefined} api={fakeApi({ answer: () => pending.promise })} sessionId={SESSION_ID} />);
     fireEvent.change(await screen.findByLabelText("Your answer"), { target: { value: "My answer" } });
     fireEvent.click(screen.getByRole("button", { name: /Submit answer/ }));
     expect(screen.getByText("Your interviewer is evaluating your answer")).toBeDefined();
@@ -132,7 +133,7 @@ describe("SessionPage", () => {
   });
 
   it("keeps the answer when submitting fails", async () => {
-    render(<SessionPage api={fakeApi({ answer: () => Promise.resolve(err("The model is overloaded.")) })} sessionId={SESSION_ID} />);
+    render(<SessionPage voice={undefined} api={fakeApi({ answer: () => Promise.resolve(err("The model is overloaded.")) })} sessionId={SESSION_ID} />);
     fireEvent.change(await screen.findByLabelText("Your answer"), { target: { value: "My answer" } });
     fireEvent.click(screen.getByRole("button", { name: /Submit answer/ }));
     expect(await screen.findByText("The model is overloaded.")).toBeDefined();
@@ -140,7 +141,7 @@ describe("SessionPage", () => {
   });
 
   it("ends the interview on request and offers a fresh start", async () => {
-    render(<SessionPage api={fakeApi()} sessionId={SESSION_ID} />);
+    render(<SessionPage voice={undefined} api={fakeApi()} sessionId={SESSION_ID} />);
     fireEvent.click(await screen.findByRole("button", { name: /End interview/ }));
     expect(await screen.findByText("This interview was stopped")).toBeDefined();
     expect(screen.getByText(new RegExp(abandoned.reason))).toBeDefined();
@@ -148,14 +149,14 @@ describe("SessionPage", () => {
   });
 
   it("opens finished sessions on their result", async () => {
-    render(<SessionPage api={fakeApi({ session: () => Promise.resolve(ok(completed)) })} sessionId={SESSION_ID} />);
+    render(<SessionPage voice={undefined} api={fakeApi({ session: () => Promise.resolve(ok(completed)) })} sessionId={SESSION_ID} />);
     expect(await screen.findByText("Scores by criterion")).toBeDefined();
   });
 });
 
 describe("App", () => {
   it("shows the interviewer model and highlights the current section", async () => {
-    render(<App api={fakeApi()} />);
+    render(<App api={fakeApi()} createVoice={() => fakeVoice()} />);
     expect(await screen.findByText("claude-opus-5-5")).toBeDefined();
     expect(screen.getByText(/cyai 0\.1\.0/)).toBeDefined();
     const nav = (name: string): string | null => screen.getByRole("link", { name }).getAttribute("aria-current");
@@ -177,7 +178,9 @@ describe("App", () => {
   it("ignores a load that finishes after the page changed", async () => {
     const slow = deferred<Result<PracticeView, string>>();
     window.location.hash = `#/session/${SESSION_ID}`;
-    render(<App api={fakeApi({ session: () => slow.promise, info: () => Promise.resolve(err("offline")) })} />);
+    render(
+      <App api={fakeApi({ session: () => slow.promise, info: () => Promise.resolve(err("offline")) })} createVoice={() => fakeVoice()} />,
+    );
     await goTo("#/");
     await act(async () => {
       slow.resolve(ok(question));

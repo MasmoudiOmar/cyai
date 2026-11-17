@@ -8,7 +8,17 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["packages/*/src/**/*.{ts,tsx}"],
-      exclude: ["**/*.test.{ts,tsx}", "**/index.ts", "**/test-support/**", "packages/fixtures/**", "**/bin.ts", "packages/web/src/main.tsx"],
+      // Entry points, plus the browser audio adapter: it only wires microphone, recorder and
+      // speech APIs that jsdom lacks, and every decision it feeds is tested in voice/*.
+      exclude: [
+        "**/*.test.{ts,tsx}",
+        "**/index.ts",
+        "**/test-support/**",
+        "packages/fixtures/**",
+        "**/bin.ts",
+        "packages/web/src/main.tsx",
+        "packages/web/src/voice/browser.ts",
+      ],
       thresholds: { lines: 100, functions: 100, branches: 100, statements: 100 },
     },
   },

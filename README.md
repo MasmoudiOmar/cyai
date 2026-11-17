@@ -15,7 +15,7 @@ Then pick the interface that suits you:
 
 | You prefer | Run | What you get |
 |---|---|---|
-| A browser | `cyai ui` | A local web app at http://localhost:4477: pick an interview, paste your resume, answer against a visible timer, read a scored debrief |
+| A browser | `cyai ui` | A local web app at http://localhost:4477: pick an interview, paste your resume, answer out loud or in writing as the real screen expects, read a scored debrief |
 | A terminal | `cyai practice ai-trainer-generalist --resume cv.md --jd job.md` | The same interview, question by question, in the terminal |
 | Your AI agent | `cyai mcp` (see below) | Claude Code, Cursor or Codex runs the interview |
 
@@ -28,6 +28,28 @@ claude mcp add --scope user cyai -- node "$PWD/packages/cli/dist/bin.js" mcp
 ```
 
 Guides for Claude Code, Cursor, Codex and other MCP clients are in [integrations/](integrations).
+
+## Spoken interviews
+
+Voice screeners such as Mercor's and micro1's are spoken, and so are cyai's interviews that copy them (marked **Spoken** in the app):
+
+- The interviewer asks each question out loud. Captions are off by default, as in the real thing.
+- You answer out loud. A conversational interviewer moves on after a 4-second pause, and checks in if you say nothing for 10 seconds. A one-way recorded screen records until its window closes or you click Done.
+- Follow-ups build on what you just said.
+- The debrief scores your delivery as well as your content: pace, filler words ("um", "uh", "you know"), long pauses and how quickly you start. Fillers are highlighted in each transcript.
+
+The browser asks for your microphone once; the setup page checks it before you start. By default the browser does the speech work (best in Chrome or Edge), but browser recognisers send audio to their vendor and drop many fillers. For verbatim transcripts and a better voice, point cyai at OpenAI-compatible speech servers:
+
+```bash
+# Local servers, e.g. speaches (Whisper + Kokoro); check its docs for model and voice names
+cyai ui --stt-url http://localhost:8000/v1 --stt-model Systran/faster-whisper-small \
+        --tts-url http://localhost:8000/v1 --tts-model <kokoro-model> --tts-voice af_heart
+
+# Or OpenAI (audio leaves your computer): uses OPENAI_API_KEY, whisper-1 and tts-1 by default
+cyai ui --stt-url https://api.openai.com/v1 --tts-url https://api.openai.com/v1
+```
+
+`CYAI_SPEECH_API_KEY` overrides `OPENAI_API_KEY` for speech servers. Recordings are never stored: sessions keep the transcript and the delivery measurements only. In the terminal, spoken interviews are typed.
 
 ## How it works
 

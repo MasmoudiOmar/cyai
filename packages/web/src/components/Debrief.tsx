@@ -1,8 +1,10 @@
 import type { CompletedView, EvaluatedTurn, Overtime } from "@cyai/spec";
 import type { JSX } from "react";
 
+import { summarizeDelivery } from "../delivery.js";
 import { formatScore, scoreTone } from "../format.js";
 import { hrefFor } from "../route.js";
+import { DeliveryCard, DeliveryPills, Transcript } from "./DeliveryCard.js";
 import { Arrow, Icon } from "./Icon.js";
 import { ScoreRing } from "./ScoreRing.js";
 
@@ -39,8 +41,9 @@ function TurnFeedback({ turn, label }: { readonly turn: EvaluatedTurn; readonly 
         <summary>
           <Icon name="chevron" size={15} /> Your answer
         </summary>
-        <blockquote>{answered ? turn.answer.text : "(no answer)"}</blockquote>
+        <blockquote>{answered ? <Transcript text={turn.answer.text} /> : "(no answer)"}</blockquote>
       </details>
+      {turn.answer.delivery === undefined ? null : <DeliveryPills delivery={turn.answer.delivery} />}
       <p className="feedback">
         <Icon name="spark" />
         <span>{turn.evaluation.rationale}</span>
@@ -63,6 +66,7 @@ export function Debrief({ view }: { readonly view: CompletedView }): JSX.Element
   // The schema guarantees at least one criterion, so these reductions always have a value.
   const strongest = scorecard.criteria.reduce((best, criterion) => (criterion.average > best.average ? criterion : best));
   const weakest = scorecard.criteria.reduce((worst, criterion) => (criterion.average < worst.average ? criterion : worst));
+  const delivery = summarizeDelivery(view.turns);
   return (
     <div className="room">
       <section className="card pad result" aria-label="Result">
@@ -124,6 +128,8 @@ export function Debrief({ view }: { readonly view: CompletedView }): JSX.Element
           ))}
         </ul>
       </section>
+
+      {delivery === undefined ? null : <DeliveryCard summary={delivery} />}
 
       <div className="section-head">
         <h2 className="display">Question by question</h2>

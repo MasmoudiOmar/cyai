@@ -43,6 +43,7 @@ describe("analyzeDelivery", () => {
       pauseCount: 2,
       longestPauseMs: 3_500,
       latencyMs: 1_200,
+      durationMs: 36_200,
       speakingShare: 0.86,
       transcriber: "whisper",
     });
@@ -58,6 +59,7 @@ describe("analyzeDelivery", () => {
       pauseCount: 0,
       longestPauseMs: 0,
       latencyMs: 0,
+      durationMs: 0,
       speakingShare: 0,
       transcriber: "browser",
     });

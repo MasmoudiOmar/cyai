@@ -1168,6 +1168,132 @@ textarea {
   animation: breathe 1.8s ease-in-out infinite;
 }
 
+/* ───────────────────────── Voice ───────────────────────── */
+
+/* The interviewer's presence: the orb speaks, the ring around it follows your microphone. */
+.voice-presence {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.voice-presence .orb {
+  position: relative;
+  z-index: 1;
+  grid-area: 1 / 1;
+  animation-duration: 3.2s;
+}
+
+.voice-presence.phase-asking .orb,
+.voice-presence.phase-nudging .orb {
+  animation-duration: 0.9s;
+}
+
+.voice-presence.phase-transcribing .orb,
+.voice-presence.phase-thinking .orb,
+.voice-presence.phase-failed .orb {
+  animation: none;
+  opacity: 0.45;
+}
+
+.mic-level {
+  grid-area: 1 / 1;
+  width: 56px;
+  height: 56px;
+  border: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
+  border-radius: 50%;
+  opacity: 0;
+  transition:
+    transform 80ms linear,
+    opacity 200ms ease;
+}
+
+.phase-listening .mic-level,
+.mic-testing .mic-level {
+  opacity: 1;
+}
+
+.presence-label {
+  color: var(--text-2);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.phase-listening .presence-label {
+  color: var(--accent);
+}
+
+.voice-bar .answer-bar {
+  justify-content: flex-end;
+}
+
+.voice-bar .answer-bar > :first-child {
+  margin-right: auto;
+}
+
+.voice-bar .notice {
+  margin: 1rem 1rem 0;
+}
+
+.system-check {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.check-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  transition: border-color 200ms ease;
+}
+
+.check-row > span:nth-child(2) {
+  display: grid;
+  gap: 0.1rem;
+  font-size: 0.9rem;
+}
+
+.check-row.mic-heard {
+  border-color: color-mix(in srgb, var(--success) 45%, transparent);
+}
+
+.check-row.mic-heard .check-icon {
+  color: var(--success);
+}
+
+.check-row.mic-silent,
+.check-row.mic-failed {
+  border-color: color-mix(in srgb, var(--warning) 45%, transparent);
+}
+
+.check-icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text-2);
+}
+
+.check-icon .mic-level {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  height: auto;
+}
+
 /* ───────────────────────── Debrief ───────────────────────── */
 
 .result {
@@ -1468,6 +1594,44 @@ textarea {
   .interview-card:active {
     transform: none;
   }
+}
+
+.delivery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem;
+  margin: 1.25rem 0 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.delivery-grid li {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.delivery-grid strong {
+  font-size: 1.35rem;
+  font-weight: 550;
+}
+
+.delivery-grid .muted {
+  font-size: 0.8rem;
+}
+
+.delivery .pill {
+  margin: 0.2rem 0.3rem 0 0;
+}
+
+mark.filler {
+  padding: 0 0.15em;
+  border-radius: 4px;
+  background: var(--warning-soft);
+  color: var(--warning);
 }
 
 /* ───────────────────────── Responsive ───────────────────────── */

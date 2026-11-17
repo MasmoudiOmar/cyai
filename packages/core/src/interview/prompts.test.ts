@@ -69,6 +69,7 @@ describe("evaluationRequest", () => {
       pauseCount: 2,
       longestPauseMs: 3_200,
       latencyMs: 900,
+      durationMs: 60_000,
       speakingShare: 0.9,
       transcriber: "whisper",
     };

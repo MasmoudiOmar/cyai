@@ -1,4 +1,5 @@
-import type { JSX } from "react";
+import type { VoiceInfo } from "@cyai/spec";
+import { useMemo, type JSX } from "react";
 
 import type { ApiClient } from "./api.js";
 import { Icon } from "./components/Icon.js";
@@ -8,17 +9,24 @@ import { SessionPage } from "./pages/SessionPage.js";
 import { SetupPage } from "./pages/SetupPage.js";
 import { hrefFor, useRoute, type Route } from "./route.js";
 import { useLoad } from "./use-load.js";
+import type { VoiceIO } from "./voice/io.js";
 
-function Page({ api, route }: { readonly api: ApiClient; readonly route: Route }): JSX.Element {
+interface PageProps {
+  readonly api: ApiClient;
+  readonly voice: VoiceIO | undefined;
+  readonly route: Route;
+}
+
+function Page({ api, voice, route }: PageProps): JSX.Element {
   switch (route.page) {
     case "home":
       return <HomePage api={api} />;
     case "history":
       return <HistoryPage api={api} />;
     case "setup":
-      return <SetupPage key={route.interviewId} api={api} interviewId={route.interviewId} />;
+      return <SetupPage key={route.interviewId} api={api} voice={voice} interviewId={route.interviewId} />;
     case "session":
-      return <SessionPage key={route.sessionId} api={api} sessionId={route.sessionId} />;
+      return <SessionPage key={route.sessionId} api={api} voice={voice} sessionId={route.sessionId} />;
   }
 }
 
@@ -28,10 +36,18 @@ function current(route: Route, page: "home" | "history"): "page" | undefined {
   return section === page ? "page" : undefined;
 }
 
-export function App({ api }: { readonly api: ApiClient }): JSX.Element {
+interface AppProps {
+  readonly api: ApiClient;
+  /** Builds the browser's audio once the server has said which speech services it has. */
+  readonly createVoice: (info: VoiceInfo) => VoiceIO;
+}
+
+export function App({ api, createVoice }: AppProps): JSX.Element {
   const route = useRoute();
   const info = useLoad("info", api.info);
   const ready = info.current.state === "ready" ? info.current.value : undefined;
+  const voiceInfo = ready?.voice;
+  const voice = useMemo(() => (voiceInfo === undefined ? undefined : createVoice(voiceInfo)), [createVoice, voiceInfo]);
   return (
     <div className="app">
       <header className="topbar">
@@ -61,7 +77,7 @@ export function App({ api }: { readonly api: ApiClient }): JSX.Element {
         </div>
       </header>
       <main className="content" key={hrefFor(route)}>
-        <Page api={api} route={route} />
+        <Page api={api} voice={voice} route={route} />
       </main>
       <footer className="footer">
         <span>{ready === undefined ? "cyai" : `cyai ${ready.version}`} · Practice only. Never use it during a real interview.</span>

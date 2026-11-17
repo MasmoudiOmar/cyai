@@ -31,6 +31,22 @@ export const question: QuestionView = {
   turnTaking: { answer: "typed", endOfTurn: "submit" },
 };
 
+/** A conversational voice question: ends after a 4-second pause, nudges after 10 seconds of silence. */
+export const spokenQuestion: QuestionView = {
+  ...question,
+  turnTaking: { answer: "spoken", endOfTurn: "silence", endSilenceSeconds: 4, nudgeAfterSeconds: 10 },
+};
+
+/** A one-way recorded question: 5 seconds to prepare, then recorded until Done or 30 seconds. */
+export const recordedQuestion: QuestionView = {
+  ...question,
+  prepSeconds: 5,
+  hardSeconds: 30,
+  turnTaking: { answer: "spoken", endOfTurn: "timer" },
+};
+
+export const spokenInterview: InterviewSummary = { ...interview, turnTaking: spokenQuestion.turnTaking };
+
 export const completed: CompletedView = {
   kind: "completed",
   sessionId: SESSION_ID,
@@ -85,6 +101,8 @@ export function fakeApi(overrides: Partial<ApiClient> = {}): ApiClient {
     session: () => Promise.resolve(ok(question)),
     answer: () => Promise.resolve(ok(completed)),
     abandon: () => Promise.resolve(ok(abandoned)),
+    transcribe: () => Promise.resolve(ok("Um, I escalated it.")),
+    speech: () => Promise.resolve(ok(new Blob([], { type: "audio/mpeg" }))),
     ...overrides,
   };
 }

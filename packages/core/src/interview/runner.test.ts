@@ -78,6 +78,7 @@ describe("standalone runner", () => {
     const asked = questionOf(unwrap(await startRun(spoken, spokenRunner)));
     const next = questionOf(unwrap(await answerRun(spoken, spokenRunner, asked, "Um, I escalated.", minuteOfSpeech)));
     expect(next.turns[0]?.answer.delivery).toMatchObject({ words: 3, fillers: [{ word: "um", count: 1 }] });
+    expect(next.turns[0]?.elapsedMs).toBe(63_700);
     expect(spokenRunner.model.requests[0]?.user).toContain("<delivery>");
 
     const typedRunner = runnerWith(replies);

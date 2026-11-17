@@ -5,16 +5,17 @@ import { Icon } from "./Icon.js";
 interface NoticeProps {
   readonly message: string;
   readonly onRetry?: () => void;
+  readonly retryLabel?: string;
 }
 
-export function Notice({ message, onRetry }: NoticeProps): JSX.Element {
+export function Notice({ message, onRetry, retryLabel = "Try again" }: NoticeProps): JSX.Element {
   return (
     <div className="notice" role="alert">
       <Icon name="alert" />
       <p>{message}</p>
       {onRetry === undefined ? null : (
         <button type="button" className="button ghost" onClick={onRetry}>
-          Try again
+          {retryLabel}
         </button>
       )}
     </div>

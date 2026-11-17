@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { evaluation } from "@cyai/fixtures";
-import type { CompletedView, EvaluatedTurn } from "@cyai/spec";
+import type { CompletedView, DeliveryMetrics, EvaluatedTurn } from "@cyai/spec";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
@@ -67,5 +67,49 @@ describe("Debrief", () => {
     expect(screen.getByText("Follow-up")).toBeDefined();
     expect(screen.getByText("(no answer)")).toBeDefined();
     expect(screen.getByText("2.0")).toBeDefined();
+  });
+});
+
+const delivery: DeliveryMetrics = {
+  words: 140,
+  wordsPerMinute: 140,
+  fillers: [{ word: "um", count: 2 }],
+  fillersPerMinute: 2,
+  repetitions: 0,
+  pauseCount: 1,
+  longestPauseMs: 6_200,
+  latencyMs: 900,
+  durationMs: 62_000,
+  speakingShare: 0.9,
+  transcriber: "browser",
+};
+
+function spokenResult(metrics: DeliveryMetrics, text: string): CompletedView {
+  return { ...completed, turns: completed.turns.map((answered) => ({ ...answered, answer: { ...answered.answer, text, delivery: metrics } })) };
+}
+
+describe("delivery in the debrief", () => {
+  it("summarises how the interview sounded and marks fillers", () => {
+    const { container } = render(<Debrief view={spokenResult(delivery, "Um, I escalated, um, then complied.")} />);
+    const card = screen.getByRole("region", { name: "Delivery" });
+    expect(card.textContent).toContain("140 wpm");
+    expect(card.textContent).toContain("Steady conversational pace");
+    expect(card.textContent).toContain("6.2s");
+    expect(card.textContent).toContain("Long enough to be cut off");
+    expect(card.textContent).toContain("“um” × 2");
+    expect(card.textContent).toContain("drops many fillers");
+    expect([...container.querySelectorAll("mark.filler")].map((mark) => mark.textContent)).toEqual(["Um", "um"]);
+    expect(screen.getByText("Pace · 140 wpm")).toBeDefined();
+  });
+
+  it("praises a clean answer and leaves typed interviews alone", () => {
+    render(<Debrief view={spokenResult({ ...delivery, fillers: [], transcriber: "whisper" }, "I escalated.")} />);
+    expect(screen.getByText(/No filler words/)).toBeDefined();
+    expect(screen.queryByText(/drops many fillers/)).toBeNull();
+  });
+
+  it("is absent for typed interviews", () => {
+    render(<Debrief view={completed} />);
+    expect(screen.queryByRole("region", { name: "Delivery" })).toBeNull();
   });
 });
