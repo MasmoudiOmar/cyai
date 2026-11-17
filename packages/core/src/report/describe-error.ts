@@ -1,9 +1,10 @@
 import type { CatalogError } from "../catalog/catalog.js";
 import type { FlowError } from "../interview/flow.js";
 import type { ModelError, StoreError } from "../ports/index.js";
+import type { WrongStatus } from "../service/repository.js";
 
 /** Every error the engine and its ports can produce. */
-export type CyaiError = FlowError | ModelError | StoreError | CatalogError;
+export type CyaiError = FlowError | ModelError | StoreError | CatalogError | WrongStatus;
 
 /** A neutral, one-line explanation of an engine error. */
 export function describeError(error: CyaiError): string {
@@ -34,6 +35,8 @@ export function describeError(error: CyaiError): string {
       return `The system clock went backwards (${error.received} is before ${error.earliest}).`;
     case "invalid_transition":
       return `Cannot ${error.event} a session that is "${error.from}".`;
+    case "wrong_status":
+      return `Session ${error.sessionId} is "${error.actual}", not "${error.expected}".`;
     case "unknown_follow_up_target":
       return `A follow-up refers to question ${String(error.followUpOf + 1)}, but only ${String(error.turnCount)} exist.`;
   }

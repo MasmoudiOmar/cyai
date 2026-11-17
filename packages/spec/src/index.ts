@@ -7,3 +7,4 @@ export * from "./result.js";
 export * from "./rubric.js";
 export * from "./scorecard.js";
 export * from "./session.js";
+export * from "./views.js";

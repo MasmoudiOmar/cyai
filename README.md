@@ -2,17 +2,26 @@
 
 Practice for interviews run by **AI interviewers** (async video screens, adaptive voice/chat screeners), locally and with any AI agent you already use.
 
-> **Status:** M1. The MCP server, the terminal CLI, the model adapters and the starter templates work. It is not on npm yet: build it from source.
+> **Status:** M1. The web app, the terminal CLI, the MCP server, the model adapters and the starter templates work. It is not on npm yet: build it from source.
 
 ## Quick start
 
 ```bash
 pnpm install && pnpm build
-node packages/cli/dist/bin.js list
-node packages/cli/dist/bin.js practice ai-trainer-generalist --resume cv.md --jd job.md
+alias cyai="node $PWD/packages/cli/dist/bin.js"
 ```
 
-Or plug it into your agent. In Claude Code, run:
+Then pick the interface that suits you:
+
+| You prefer | Run | What you get |
+|---|---|---|
+| A browser | `cyai ui` | A local web app at http://localhost:4477: pick an interview, paste your resume, answer against a visible timer, read a scored debrief |
+| A terminal | `cyai practice ai-trainer-generalist --resume cv.md --jd job.md` | The same interview, question by question, in the terminal |
+| Your AI agent | `cyai mcp` (see below) | Claude Code, Cursor or Codex runs the interview |
+
+`cyai ui` and `cyai practice` need an interviewer model: set `ANTHROPIC_API_KEY` to use Claude, or add `--provider openai --model llama3.2` to use a local [Ollama](https://ollama.com) model for free. Everything stays on your computer except what is sent to that model. The web app listens on localhost only.
+
+To use cyai from your agent, in Claude Code run:
 
 ```bash
 claude mcp add --scope user cyai -- node "$PWD/packages/cli/dist/bin.js" mcp
@@ -23,7 +32,7 @@ Guides for Claude Code, Cursor, Codex and other MCP clients are in [integrations
 ## How it works
 
 - **Agent mode (`cyai mcp`).** Your agent is the interviewer. cyai hands it the plan, the question briefs, the rubric and the follow-up policy, then scores what it reports. No API key is needed beyond the one your agent already uses.
-- **Terminal mode (`cyai practice`).** A model plays the interviewer: Claude by default, or any OpenAI-compatible server such as Ollama.
+- **Web and terminal modes (`cyai ui`, `cyai practice`).** A model plays the interviewer: Claude by default, or any OpenAI-compatible server such as Ollama. Both use the same practice service and session store, so sessions from either show up in the web app's history, where unfinished ones can be continued.
 
 Sessions are saved as JSON under `~/.cyai`, after every step, so an interrupted interview can be resumed.
 
@@ -37,7 +46,9 @@ Sessions are saved as JSON under `~/.cyai`, after every step, so an interrupted 
 | [`@cyai/node`](packages/node) | Node adapters: JSON-file session store, system clock and ids, environment settings |
 | [`@cyai/llm`](packages/llm) | `TextModel` adapters: Anthropic (Claude) and OpenAI-compatible (Ollama, vLLM, LM Studio, …) |
 | [`@cyai/mcp`](packages/mcp) | The MCP server: interview tools and the `mock_interview` prompt |
-| [`cyai`](packages/cli) | The command-line tool: `list`, `practice`, `history`, `mcp` |
+| [`@cyai/server`](packages/server) | Local HTTP server: the JSON practice API and the built web app, localhost only |
+| [`@cyai/web`](packages/web) | The React web app (Vite). Validates every API response against the `@cyai/spec` schemas |
+| [`cyai`](packages/cli) | The command-line tool: `ui`, `list`, `practice`, `history`, `mcp` |
 | `@cyai/tsconfig`, `@cyai/eslint-config` | Shared strict tooling configs |
 | `@cyai/fixtures` | Private, schema-valid test fixtures (never published) |
 

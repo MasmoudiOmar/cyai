@@ -1,0 +1,31 @@
+{
+  "name": "@cyai/server",
+  "version": "0.0.0",
+  "description": "Local HTTP server for the cyai web app: a JSON practice API plus the built web client.",
+  "license": "SEE LICENSE IN ../../LICENSE",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "@cyai/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@cyai/core": "workspace:*",
+    "@cyai/node": "workspace:*",
+    "@cyai/spec": "workspace:*",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@cyai/fixtures": "workspace:*",
+    "@cyai/mcp": "workspace:*"
+  }
+}

@@ -9,7 +9,9 @@ const request = { system: "SYSTEM", user: "USER", response: { name: "interview_q
 const question: Extract<Reply, { kind: "question" }> = {
   kind: "question",
   sessionId: SESSION_ID,
+  role: "AI Trainer",
   number: 2,
+  maxQuestions: 5,
   text: "Why us?",
   followUp: true,
   prepSeconds: 30,
@@ -39,13 +41,15 @@ describe("renderReply", () => {
       sessionId: SESSION_ID,
       role: "AI Trainer",
       scorecard: { criteria: [{ criterionId: "structure", average: 4, samples: 1 }], overall: 4, passed: true, evaluatedTurns: 1 },
+      passThreshold: 3.5,
+      criteria: [{ id: "structure", label: "Structure" }],
       turns: [],
     };
     expect(renderReply(reply)).toMatch(/^## Interview complete: AI Trainer[\s\S]*Share this debrief with the candidate/);
   });
 
   it("confirms an abandoned session", () => {
-    expect(renderReply({ kind: "abandoned", sessionId: SESSION_ID, reason: "Left" })).toBe(
+    expect(renderReply({ kind: "abandoned", sessionId: SESSION_ID, role: "AI Trainer", reason: "Left" })).toBe(
       `Interview ${SESSION_ID} has ended: Left`,
     );
   });

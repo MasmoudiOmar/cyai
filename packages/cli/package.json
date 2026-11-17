@@ -4,7 +4,9 @@
   "description": "CrackYourAIInterview: practise AI-run interviews in your terminal, or serve them to Claude Code, Cursor or any MCP client.",
   "license": "SEE LICENSE IN ../../LICENSE",
   "type": "module",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "bin": {
     "cyai": "./dist/bin.js"
   },
@@ -23,8 +25,10 @@
     "@cyai/llm": "workspace:*",
     "@cyai/mcp": "workspace:*",
     "@cyai/node": "workspace:*",
+    "@cyai/server": "workspace:*",
     "@cyai/spec": "workspace:*",
-    "@cyai/templates": "workspace:*"
+    "@cyai/templates": "workspace:*",
+    "@cyai/web": "workspace:*"
   },
   "devDependencies": {
     "@cyai/fixtures": "workspace:*"

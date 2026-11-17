@@ -15,7 +15,7 @@
       "default": "./dist/index.js"
     },
     "./test-support": {
-      "@cyai/source": "./src/test-support/interview.ts"
+      "@cyai/source": "./src/test-support/index.ts"
     }
   },
   "scripts": {

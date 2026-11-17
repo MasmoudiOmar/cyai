@@ -147,6 +147,7 @@ describe("OpenAI-compatible model", () => {
     expect(sent?.headers.get("authorization")).toBe("Bearer secret");
     expect(sent?.body).toMatchObject({
       model: "llama3.2",
+      stream: true,
       response_format: { type: "json_schema", json_schema: { name: "interview_question", strict: true } },
     });
   });
@@ -168,6 +169,44 @@ describe("OpenAI-compatible model", () => {
   ] as const)("reports %s", async (_case, body, reason) => {
     const model = createOpenAICompatibleModel({ model: "m", fetch: fakeFetch(200, body) });
     expect(await model.generate(request)).toMatchObject({ ok: false, error: { reason } });
+  });
+
+  it("reads a streamed completion", async () => {
+    const chunk = (delta: Record<string, unknown>, finish: string | null = null): string =>
+      `data: ${JSON.stringify({ choices: [{ delta, finish_reason: finish }] })}\n\n`;
+    const stream = [chunk({ role: "assistant" }), chunk({ content: '{"text":' }), ": keep-alive\n", chunk({ content: '"Hi"}' }, "stop"), "data: {\"choices\":[]}\n", "data: [DONE]\n"].join("");
+    const model = createOpenAICompatibleModel({ model: "m", fetch: fakeFetch(200, stream) });
+    expect(await model.generate(request)).toEqual({ ok: true, value: '{"text":"Hi"}' });
+    const refused = chunk({ refusal: "No" }, "stop");
+    expect(await createOpenAICompatibleModel({ model: "m", fetch: fakeFetch(200, refused) }).generate(request)).toMatchObject({
+      ok: false,
+      error: { reason: "refused", message: "No" },
+    });
+  });
+
+  it.each([
+    ["a malformed event", "data: {oops\n"],
+    ["an unexpected event", 'data: {"error":"model not found"}\n'],
+  ])("reports %s in a stream", async (_case, stream) => {
+    const model = createOpenAICompatibleModel({ model: "m", fetch: fakeFetch(200, stream) });
+    expect(await model.generate(request)).toMatchObject({ ok: false, error: { reason: "failed" } });
+  });
+
+  it("reports a stream that breaks off", async () => {
+    const broken: typeof globalThis.fetch = () =>
+      Promise.resolve(
+        new Response(
+          new ReadableStream({
+            start: (controller): void => {
+              controller.error(new Error("socket hang up"));
+            },
+          }),
+        ),
+      );
+    expect(await createOpenAICompatibleModel({ model: "m", fetch: broken }).generate(request)).toMatchObject({
+      ok: false,
+      error: { reason: "unavailable", message: "socket hang up" },
+    });
   });
 
   it("maps HTTP errors and network failures", async () => {

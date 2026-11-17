@@ -23,6 +23,7 @@ describe("describeError", () => {
     [{ code: "clock_skew", earliest: at(5), received: at(1) }, `The system clock went backwards (${at(1)} is before ${at(5)}).`],
     [{ code: "invalid_transition", from: "completed", event: "answer" }, 'Cannot answer a session that is "completed".'],
     [{ code: "unknown_follow_up_target", followUpOf: 3, turnCount: 1 }, "A follow-up refers to question 4, but only 1 exist."],
+    [{ code: "wrong_status", sessionId: "s", expected: "awaiting_answer", actual: "completed" }, 'Session s is "completed", not "awaiting_answer".'],
   ];
 
   it.each(cases)("explains %j", (error, message) => {
@@ -75,5 +76,14 @@ describe("summaries", () => {
     expect(formatSessionTable([created])).toContain(`| created | ${at(0)} | - |`);
     expect(formatSessionTable([{ ...created, status: "completed", overall: 3.456 }])).toContain("| 3.46 |");
     expect(formatSessionTable([])).toBe("No practice sessions yet.");
+  });
+
+  it("pads plain tables into aligned columns for terminals", () => {
+    const created = summarizeSession({ session: createdSession(), candidate: {} });
+    const lines = formatSessionTable([created, { ...created, interviewId: "x", overall: 4 }], "plain").split("\n");
+    expect(lines[0]).toMatch(/^Session {31}Interview {14}Status {3}Started {19}Overall$/);
+    expect(lines[1]).toMatch(/^-{36} {2}-{21} {2}-{7} {2}-{24} {2}-{7}$/);
+    expect(lines[2]).toBe(`${created.sessionId}  ai-trainer-generalist  created  ${at(0)}  -`);
+    expect(lines[3]).toBe(`${created.sessionId}  x                      created  ${at(0)}  4.00`);
   });
 });

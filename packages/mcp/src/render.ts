@@ -1,12 +1,5 @@
-import {
-  describeError,
-  formatDebrief,
-  formatInterviewTable,
-  formatSessionTable,
-  type InterviewSummary,
-  type ModelRequest,
-  type SessionSummary,
-} from "@cyai/core";
+import { describeError, formatDebrief, formatInterviewTable, formatSessionTable, type ModelRequest } from "@cyai/core";
+import type { InterviewSummary, SessionSummary } from "@cyai/spec";
 
 import type { Reply, ServiceError } from "./service.js";
 import { TOOLS } from "./tool-names.js";
@@ -60,6 +53,9 @@ export function renderReply(reply: Reply): string {
 
 /** How the agent can recover, for errors it can do something about. */
 function recoveryHint(error: ServiceError): string | undefined {
+  if (error.code === "wrong_status") {
+    return `Call \`${TOOLS.resume}\` to get the current step.`;
+  }
   if (error.code === "invalid_response") {
     return "Fix it and call the tool again.";
   }
@@ -77,9 +73,6 @@ function recoveryHint(error: ServiceError): string | undefined {
 
 /** A message for the agent explaining what went wrong and how to recover. */
 export function renderError(error: ServiceError): string {
-  if (error.code === "wrong_status") {
-    return `Session ${error.sessionId} is "${error.actual}", not "${error.expected}". Call \`${TOOLS.resume}\` to get the current step.`;
-  }
   const hint = recoveryHint(error);
   return hint === undefined ? describeError(error) : `${describeError(error)} ${hint}`;
 }

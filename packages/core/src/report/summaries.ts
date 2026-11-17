@@ -1,25 +1,8 @@
-import type { SessionRecord, SessionStatus } from "@cyai/spec";
+import type { InterviewSummary, SessionRecord, SessionSummary } from "@cyai/spec";
 
 import type { TemplateCatalog } from "../catalog/catalog.js";
 import { isIn } from "../session/guards.js";
 import { formatScore } from "./debrief.js";
-
-export interface InterviewSummary {
-  readonly id: string;
-  readonly role: string;
-  readonly profile: string;
-  readonly format: string;
-  readonly totalMinutes: number;
-  readonly maxQuestions: number;
-}
-
-export interface SessionSummary {
-  readonly sessionId: string;
-  readonly interviewId: string;
-  readonly status: SessionStatus;
-  readonly createdAt: string;
-  readonly overall?: number;
-}
 
 /** Interviews whose profile is installed, in catalog order. */
 export function summarizeInterviews(catalog: TemplateCatalog): readonly InterviewSummary[] {
@@ -50,15 +33,35 @@ export function summarizeSession({ session }: SessionRecord): SessionSummary {
   };
 }
 
-function table(header: readonly string[], rows: readonly (readonly string[])[]): string {
+/** `markdown` for agents and documents; `plain` pads columns for a terminal. */
+export type TableStyle = "markdown" | "plain";
+
+function markdownTable(header: readonly string[], rows: readonly (readonly string[])[]): string {
   const line = (cells: readonly string[]): string => `| ${cells.join(" | ")} |`;
   return [line(header), line(header.map(() => "---")), ...rows.map(line)].join("\n");
 }
 
-export function formatInterviewTable(interviews: readonly InterviewSummary[]): string {
+/** The cell in `column`, or "" for a short row. Avoids `undefined` from indexing. */
+function cellAt(cells: readonly string[], column: number): string {
+  return cells.slice(column, column + 1).join("");
+}
+
+function plainTable(header: readonly string[], rows: readonly (readonly string[])[]): string {
+  const widths = header.map((_, column) => Math.max(...[header, ...rows].map((cells) => cellAt(cells, column).length)));
+  const line = (cells: readonly string[]): string =>
+    widths.map((width, column) => cellAt(cells, column).padEnd(width)).join("  ").trimEnd();
+  return [line(header), line(widths.map((width) => "-".repeat(width))), ...rows.map(line)].join("\n");
+}
+
+function table(style: TableStyle, header: readonly string[], rows: readonly (readonly string[])[]): string {
+  return style === "markdown" ? markdownTable(header, rows) : plainTable(header, rows);
+}
+
+export function formatInterviewTable(interviews: readonly InterviewSummary[], style: TableStyle = "markdown"): string {
   return interviews.length === 0
     ? "No interviews are installed."
     : table(
+        style,
         ["Interview id", "Role", "Interviewer", "Length", "Questions"],
         interviews.map((item) => [
           item.id,
@@ -70,10 +73,11 @@ export function formatInterviewTable(interviews: readonly InterviewSummary[]): s
       );
 }
 
-export function formatSessionTable(sessions: readonly SessionSummary[]): string {
+export function formatSessionTable(sessions: readonly SessionSummary[], style: TableStyle = "markdown"): string {
   return sessions.length === 0
     ? "No practice sessions yet."
     : table(
+        style,
         ["Session", "Interview", "Status", "Started", "Overall"],
         sessions.map((item) => [
           item.sessionId,

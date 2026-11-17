@@ -56,6 +56,16 @@ export async function startRun(context: InterviewContext, deps: RunnerDeps): Run
   return progress.ok ? settle(context, deps, progress.value) : progress;
 }
 
+/** Has the model evaluate the answered turn, then returns the next question or the result. */
+async function evaluateRun(context: InterviewContext, deps: RunnerDeps, session: SessionIn<"awaiting_evaluation">): Run {
+  const raw = await generateJson(deps.model, evaluationRequest(context, session));
+  if (!raw.ok) {
+    return raw;
+  }
+  const progress = submitEvaluation(context, session, raw.value, nowIso(deps.clock));
+  return progress.ok ? settle(context, deps, progress.value) : progress;
+}
+
 /** Records the candidate's answer, has the model evaluate it, and returns the next question or the result. */
 export async function answerRun(
   context: InterviewContext,
@@ -64,13 +74,18 @@ export async function answerRun(
   text: string,
 ): Run {
   const answered = answerQuestion(session, text, nowIso(deps.clock));
-  if (!answered.ok) {
-    return answered;
+  return answered.ok ? evaluateRun(context, deps, answered.value) : answered;
+}
+
+/** Finishes a step that was interrupted between turns, e.g. a session started by an agent. */
+export async function resumeRun(
+  context: InterviewContext,
+  deps: RunnerDeps,
+  session: SessionIn<"awaiting_question" | "awaiting_evaluation">,
+): Run {
+  if (session.status === "awaiting_evaluation") {
+    return evaluateRun(context, deps, session);
   }
-  const raw = await generateJson(deps.model, evaluationRequest(context, answered.value));
-  if (!raw.ok) {
-    return raw;
-  }
-  const progress = submitEvaluation(context, answered.value, raw.value, nowIso(deps.clock));
+  const progress = advance(context, session, nowIso(deps.clock));
   return progress.ok ? settle(context, deps, progress.value) : progress;
 }

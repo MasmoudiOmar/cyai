@@ -1,6 +1,7 @@
 // @ts-check
 import js from "@eslint/js";
 import { defineConfig } from "eslint/config";
+import reactHooks from "eslint-plugin-react-hooks";
 import tseslint from "typescript-eslint";
 
 /**
@@ -23,13 +24,14 @@ const IO_MODULES = [
  * @typedef {object} CyaiEslintOptions
  * @property {string} tsconfigRootDir Absolute path of the repository root.
  * @property {readonly string[]} [pureGlobs] File globs that must stay free of I/O imports.
+ * @property {readonly string[]} [reactGlobs] File globs of React code, checked with the rules of hooks.
  */
 
 /**
  * Builds the shared strict configuration.
  * @param {CyaiEslintOptions} options
  */
-export function createConfig({ tsconfigRootDir, pureGlobs = [] }) {
+export function createConfig({ tsconfigRootDir, pureGlobs = [], reactGlobs = [] }) {
   return defineConfig(
     { ignores: ["**/dist/**", "**/coverage/**", "**/node_modules/**"] },
     js.configs.recommended,
@@ -81,6 +83,10 @@ export function createConfig({ tsconfigRootDir, pureGlobs = [] }) {
         "@typescript-eslint/explicit-function-return-type": "off",
         "@typescript-eslint/explicit-module-boundary-types": "off",
       },
+    },
+    {
+      files: [...reactGlobs],
+      extends: [reactHooks.configs.flat["recommended-latest"]],
     },
     {
       files: [...pureGlobs],

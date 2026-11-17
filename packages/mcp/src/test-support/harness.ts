@@ -1,47 +1,9 @@
-import { buildCatalog, type SessionStore, type StoreError, type TemplateCatalog } from "@cyai/core";
-import { aiTrainerInterview, EPOCH_MS, genericProfile, SESSION_ID, starRubric, unwrap } from "@cyai/fixtures";
-import { err, ok, type Result, type Session, type SessionRecord } from "@cyai/spec";
+import type { TemplateCatalog } from "@cyai/core";
+import { fixtureCatalog, memoryStore, type MemoryStore } from "@cyai/core/test-support";
+import { EPOCH_MS, SESSION_ID } from "@cyai/fixtures";
+import type { Session } from "@cyai/spec";
 
 import { createInterviewService, type InterviewService, type Reply } from "../service.js";
-
-/** Operations a memory store can be told to fail. */
-export type StoreOperation = "save" | "load" | "list";
-
-export interface MemoryStore extends SessionStore {
-  readonly records: Map<string, SessionRecord>;
-  readonly failing: Set<StoreOperation>;
-}
-
-const STORE_FAILURE: StoreError = { code: "store_error", reason: "io", message: "disk full" };
-
-export function memoryStore(): MemoryStore {
-  const records = new Map<string, SessionRecord>();
-  const failing = new Set<StoreOperation>();
-  const guard = <T>(operation: StoreOperation, value: () => Result<T, StoreError>): Promise<Result<T, StoreError>> =>
-    Promise.resolve(failing.has(operation) ? err(STORE_FAILURE) : value());
-  return {
-    records,
-    failing,
-    save: (record) =>
-      guard("save", () => {
-        records.set(record.session.id, record);
-        return ok(record);
-      }),
-    load: (sessionId) =>
-      guard("load", () => {
-        const record = records.get(sessionId);
-        return record === undefined
-          ? err({ code: "store_error", reason: "not_found", message: `No session ${sessionId}` })
-          : ok(record);
-      }),
-    list: () => guard("list", () => ok([...records.values()])),
-  };
-}
-
-export function fixtureCatalog(): TemplateCatalog {
-  const catalog = unwrap(buildCatalog({ profiles: [genericProfile], rubrics: [starRubric], interviews: [aiTrainerInterview] }));
-  return catalog;
-}
 
 export interface Harness {
   readonly service: InterviewService;
@@ -72,6 +34,7 @@ export function harness(catalog: TemplateCatalog = fixtureCatalog(), store: Memo
 }
 
 export { unwrap, unwrapErr } from "@cyai/fixtures";
+export { fixtureCatalog, memoryStore, type MemoryStore, type StoreOperation } from "@cyai/core/test-support";
 
 function isKind<K extends Reply["kind"]>(reply: Reply, kind: K): reply is Extract<Reply, { kind: K }> {
   return reply.kind === kind;

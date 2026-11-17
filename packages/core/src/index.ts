@@ -29,7 +29,7 @@ export {
 } from "./interview/plan.js";
 export { evaluationFormat, FOLLOW_UP_TRIGGER_MEANINGS } from "./interview/prompts.js";
 export { questionSlots, type QuestionSlot } from "./interview/question-plan.js";
-export { answerRun, startRun, type RunnerDeps, type RunnerError } from "./interview/runner.js";
+export { answerRun, resumeRun, startRun, type RunnerDeps, type RunnerError } from "./interview/runner.js";
 export { decideNextStep, followUpCount, type NextStep } from "./policy/next-step.js";
 export type {
   Clock,
@@ -66,7 +66,24 @@ export {
   formatSessionTable,
   summarizeInterviews,
   summarizeSession,
-  type InterviewSummary,
-  type SessionSummary,
+  type TableStyle,
 } from "./report/summaries.js";
+export {
+  createPracticeService,
+  type PracticeError,
+  type PracticeService,
+  type PracticeServiceDeps,
+  type Practiced,
+} from "./service/practice.js";
+export {
+  candidateFrom,
+  createSessionRepository,
+  wrongStatus,
+  type Loaded,
+  type RepositoryDeps,
+  type RepositoryError,
+  type SessionRepository,
+  type WrongStatus,
+} from "./service/repository.js";
+export { abandonedView, completedView, questionView } from "./service/views.js";
 export { CYAI_VERSION } from "./version.js";

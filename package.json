@@ -7,7 +7,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "build": "tsc -b tsconfig.build.json",
+    "build": "tsc -b tsconfig.build.json && pnpm --filter @cyai/web build",
     "typecheck": "pnpm -r --parallel run typecheck && tsc -p tsconfig.json --noEmit",
     "lint": "eslint . --max-warnings 0",
     "test": "vitest run",

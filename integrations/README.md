@@ -28,10 +28,13 @@ node /absolute/path/to/cyai/packages/cli/dist/bin.js mcp
 
 Replace `/absolute/path/to/cyai` with your clone. Sessions are saved under `~/.cyai` (`CYAI_HOME` overrides it). Extra template folders go in `CYAI_TEMPLATES`.
 
-## No agent? Use the terminal
+## No agent? Use the web app or the terminal
 
 ```bash
-node packages/cli/dist/bin.js list
+node packages/cli/dist/bin.js ui
+```
+
+```bash
 node packages/cli/dist/bin.js practice ai-trainer-generalist --resume cv.md --jd job.md
 ```
 

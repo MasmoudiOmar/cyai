@@ -97,6 +97,8 @@ describe("system adapters", () => {
   it("describes thrown values and detects missing paths", () => {
     expect(errorMessage(new Error("boom"))).toBe("boom");
     expect(errorMessage("plain")).toBe("plain");
+    const timeout = new Error("fetch failed", { cause: new Error("Headers Timeout Error", { cause: "socket" }) });
+    expect(errorMessage(timeout)).toBe("fetch failed (Headers Timeout Error)");
     expect(isMissingPath(Object.assign(new Error("x"), { code: "ENOENT" }))).toBe(true);
     expect(isMissingPath("ENOENT")).toBe(false);
   });

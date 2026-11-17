@@ -2,10 +2,23 @@
   "threshold": 0,
   "minTokens": 40,
   "minLines": 4,
-  "format": ["typescript", "javascript"],
-  "path": ["packages"],
-  "ignore": ["**/dist/**", "**/node_modules/**", "**/coverage/**"],
-  "reporters": ["console"],
+  "format": [
+    "typescript",
+    "javascript",
+    "tsx",
+    "css"
+  ],
+  "path": [
+    "packages"
+  ],
+  "ignore": [
+    "**/dist/**",
+    "**/node_modules/**",
+    "**/coverage/**"
+  ],
+  "reporters": [
+    "console"
+  ],
   "absolute": false,
   "gitignore": true
 }

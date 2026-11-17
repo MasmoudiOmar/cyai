@@ -16,7 +16,8 @@ import {
   type ScriptedReply,
 } from "../test-support/interview.js";
 import type { SettledProgress } from "./flow.js";
-import { answerRun, startRun, type RunnerDeps } from "./runner.js";
+import { begin } from "./flow.js";
+import { answerRun, resumeRun, startRun, type RunnerDeps } from "./runner.js";
 
 const context = fixtureContext();
 
@@ -93,5 +94,10 @@ describe("standalone runner", () => {
     const readings = [0, 0, -1];
     const clock: Clock = { now: () => new Date(Date.parse(at(readings.shift() ?? 0))) };
     expect(unwrapErr(await startRun(context, { ...runnerWith(), clock }))).toMatchObject({ code: "clock_skew" });
+  });
+
+  it("reports a clock that runs backwards while resuming between turns", async () => {
+    const session = unwrap(begin(context, { clock: manualClock(10), ids: fixedIds }));
+    expect(unwrapErr(await resumeRun(context, runnerWith(), session))).toMatchObject({ code: "clock_skew" });
   });
 });

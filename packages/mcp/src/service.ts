@@ -1,94 +1,61 @@
 import {
-  abandonSession,
+  abandonedView,
   advance,
   answerQuestion,
   begin,
+  candidateFrom,
+  completedView,
+  createSessionRepository,
   evaluationRequest,
-  isActive,
-  isIn,
+  nowIso,
   provideQuestion,
+  questionView,
   resolveInterview,
   submitEvaluation,
   summarizeInterviews,
-  summarizeSession,
-  nowIso,
-  type CatalogError,
-  type Clock,
+  wrongStatus,
   type FlowError,
   type IdGenerator,
   type InterviewContext,
-  type InterviewSummary,
+  type Loaded,
   type ModelRequest,
   type Progress,
-  type SessionStore,
-  type SessionSummary,
-  type StoreError,
-  type TemplateCatalog,
+  type RepositoryDeps,
+  type RepositoryError,
 } from "@cyai/core";
 import {
   err,
   ok,
+  type AbandonedView,
   type CandidateContext,
-  type EvaluatedTurn,
+  type CompletedView,
+  type InterviewSummary,
+  type QuestionView,
   type Result,
-  type Scorecard,
-  type Session,
-  type SessionIn,
-  type SessionRecord,
-  type SessionStatus,
+  type SessionSummary,
+  type StartPractice,
 } from "@cyai/spec";
 
-export interface ServiceDeps {
-  readonly catalog: TemplateCatalog;
-  readonly store: SessionStore;
-  readonly clock: Clock;
+export interface ServiceDeps extends RepositoryDeps {
   readonly ids: IdGenerator;
 }
 
-export interface WrongStatus {
-  readonly code: "wrong_status";
-  readonly sessionId: string;
-  readonly expected: SessionStatus;
-  readonly actual: SessionStatus;
-}
-
-export type ServiceError = FlowError | StoreError | CatalogError | WrongStatus;
+export type ServiceError = FlowError | RepositoryError;
 
 /** What the calling agent should do next. */
 export type Reply =
-  | {
-      readonly kind: "question";
-      readonly sessionId: string;
-      readonly number: number;
-      readonly text: string;
-      readonly followUp: boolean;
-      readonly prepSeconds: number;
-      readonly softSeconds: number;
-      readonly hardSeconds: number;
-    }
+  | QuestionView
   | { readonly kind: "write_question"; readonly sessionId: string; readonly request: ModelRequest }
   | { readonly kind: "evaluate"; readonly sessionId: string; readonly request: ModelRequest }
-  | {
-      readonly kind: "completed";
-      readonly sessionId: string;
-      readonly role: string;
-      readonly scorecard: Scorecard;
-      readonly turns: readonly EvaluatedTurn[];
-    }
-  | { readonly kind: "abandoned"; readonly sessionId: string; readonly reason: string };
-
-export interface StartInput {
-  readonly interviewId: string;
-  readonly resume?: string | undefined;
-  readonly jobDescription?: string | undefined;
-}
+  | CompletedView
+  | AbandonedView;
 
 export type Served<T> = Promise<Result<T, ServiceError>>;
 
 export interface InterviewService {
   readonly listInterviews: () => readonly InterviewSummary[];
   readonly listSessions: () => Served<readonly SessionSummary[]>;
-  readonly start: (input: StartInput) => Served<Reply>;
+  readonly start: (input: StartPractice) => Served<Reply>;
   readonly provideQuestion: (sessionId: string, text: string) => Served<Reply>;
   readonly submitAnswer: (sessionId: string, answer: string) => Served<Reply>;
   readonly submitEvaluation: (sessionId: string, evaluation: unknown) => Served<Reply>;
@@ -97,98 +64,35 @@ export interface InterviewService {
   readonly abandon: (sessionId: string, reason: string) => Served<Reply>;
 }
 
-interface Loaded<S extends SessionStatus> {
-  readonly record: SessionRecord;
-  readonly session: SessionIn<S>;
-  readonly context: InterviewContext;
-}
-
-function nonBlank(value: string | undefined): string | undefined {
-  const trimmed = value?.trim();
-  return trimmed === undefined || trimmed.length === 0 ? undefined : trimmed;
-}
-
-function candidateFrom({ resume, jobDescription }: StartInput): CandidateContext {
-  const cleanResume = nonBlank(resume);
-  const cleanJobDescription = nonBlank(jobDescription);
-  return {
-    ...(cleanResume === undefined ? {} : { resume: cleanResume }),
-    ...(cleanJobDescription === undefined ? {} : { jobDescription: cleanJobDescription }),
-  };
-}
-
-function questionReply(context: InterviewContext, session: SessionIn<"awaiting_answer">): Reply {
-  const { prepSeconds, answer } = context.profile.timing;
-  return {
-    kind: "question",
-    sessionId: session.id,
-    number: session.turns.length + 1,
-    text: session.pending.text,
-    followUp: session.pending.followUpOf !== undefined,
-    prepSeconds,
-    softSeconds: answer.softSeconds,
-    hardSeconds: answer.hardSeconds,
-  };
-}
-
 function progressReply(context: InterviewContext, progress: Progress): Reply {
   switch (progress.kind) {
     case "question":
-      return questionReply(context, progress.session);
+      return questionView(context, progress.session);
     case "needs_question":
       return { kind: "write_question", sessionId: progress.session.id, request: progress.instruction.request };
     case "completed":
-      return {
-        kind: "completed",
-        sessionId: progress.session.id,
-        role: context.interview.role,
-        scorecard: progress.session.scorecard,
-        turns: progress.session.turns,
-      };
+      return completedView(context, progress.session);
   }
 }
 
 /** Transport-independent interview operations for an agent acting as the interviewer. */
 export function createInterviewService(deps: ServiceDeps): InterviewService {
+  const repository = createSessionRepository(deps);
   const now = (): string => nowIso(deps.clock);
 
-  const save = async (record: SessionRecord, session: Session): Served<SessionRecord> =>
-    deps.store.save({ ...record, session });
-
-  const persist = async (loaded: Pick<Loaded<SessionStatus>, "record" | "context">, progress: Progress): Served<Reply> => {
-    const saved = await save(loaded.record, progress.session);
-    return saved.ok ? ok(progressReply(loaded.context, progress)) : saved;
+  const persist = async (context: InterviewContext, candidate: CandidateContext, progress: Progress): Served<Reply> => {
+    const saved = await deps.store.save({ session: progress.session, candidate });
+    return saved.ok ? ok(progressReply(context, progress)) : saved;
   };
 
-  const loadContext = async (sessionId: string): Served<Loaded<SessionStatus>> => {
-    const record = await deps.store.load(sessionId);
-    if (!record.ok) {
-      return record;
-    }
-    const context = resolveInterview(deps.catalog, record.value.session.interviewId, record.value.candidate);
-    return context.ok ? ok({ record: record.value, session: record.value.session, context: context.value }) : context;
-  };
-
-  const loadIn = async <S extends SessionStatus>(sessionId: string, status: S): Served<Loaded<S>> => {
-    const loaded = await loadContext(sessionId);
-    if (!loaded.ok) {
-      return loaded;
-    }
-    const { session } = loaded.value;
-    return isIn(session, status)
-      ? ok({ ...loaded.value, session })
-      : err({ code: "wrong_status", sessionId, expected: status, actual: session.status });
-  };
+  const continueWith = (loaded: Pick<Loaded, "record" | "context">, progress: Result<Progress, FlowError>): Served<Reply> =>
+    progress.ok ? persist(loaded.context, loaded.record.candidate, progress.value) : Promise.resolve(progress);
 
   return {
     listInterviews: () => summarizeInterviews(deps.catalog),
+    listSessions: repository.summaries,
 
-    listSessions: async (): Served<readonly SessionSummary[]> => {
-      const records = await deps.store.list();
-      return records.ok ? ok(records.value.map(summarizeSession)) : records;
-    },
-
-    start: async (input: StartInput): Served<Reply> => {
+    start: async (input: StartPractice): Served<Reply> => {
       const candidate = candidateFrom(input);
       const context = resolveInterview(deps.catalog, input.interviewId, candidate);
       if (!context.ok) {
@@ -199,23 +103,18 @@ export function createInterviewService(deps: ServiceDeps): InterviewService {
         return session;
       }
       const progress = advance(context.value, session.value, now());
-      if (!progress.ok) {
-        return progress;
-      }
-      return persist({ record: { session: session.value, candidate }, context: context.value }, progress.value);
+      return progress.ok ? persist(context.value, candidate, progress.value) : progress;
     },
 
     provideQuestion: async (sessionId: string, text: string): Served<Reply> => {
-      const loaded = await loadIn(sessionId, "awaiting_question");
-      if (!loaded.ok) {
-        return loaded;
-      }
-      const progress = provideQuestion(loaded.value.context, loaded.value.session, { text }, now());
-      return progress.ok ? persist(loaded.value, progress.value) : progress;
+      const loaded = await repository.loadIn(sessionId, "awaiting_question");
+      return loaded.ok
+        ? continueWith(loaded.value, provideQuestion(loaded.value.context, loaded.value.session, { text }, now()))
+        : loaded;
     },
 
     submitAnswer: async (sessionId: string, answer: string): Served<Reply> => {
-      const loaded = await loadIn(sessionId, "awaiting_answer");
+      const loaded = await repository.loadIn(sessionId, "awaiting_answer");
       if (!loaded.ok) {
         return loaded;
       }
@@ -223,61 +122,42 @@ export function createInterviewService(deps: ServiceDeps): InterviewService {
       if (!answered.ok) {
         return answered;
       }
-      const saved = await save(loaded.value.record, answered.value);
+      const saved = await repository.save(loaded.value.record, answered.value);
       return saved.ok
         ? ok({ kind: "evaluate", sessionId, request: evaluationRequest(loaded.value.context, answered.value) })
         : saved;
     },
 
     submitEvaluation: async (sessionId: string, evaluation: unknown): Served<Reply> => {
-      const loaded = await loadIn(sessionId, "awaiting_evaluation");
-      if (!loaded.ok) {
-        return loaded;
-      }
-      const progress = submitEvaluation(loaded.value.context, loaded.value.session, evaluation, now());
-      return progress.ok ? persist(loaded.value, progress.value) : progress;
+      const loaded = await repository.loadIn(sessionId, "awaiting_evaluation");
+      return loaded.ok
+        ? continueWith(loaded.value, submitEvaluation(loaded.value.context, loaded.value.session, evaluation, now()))
+        : loaded;
     },
 
     resume: async (sessionId: string): Served<Reply> => {
-      const loaded = await loadContext(sessionId);
+      const loaded = await repository.load(sessionId);
       if (!loaded.ok) {
         return loaded;
       }
       const { session, context } = loaded.value;
       switch (session.status) {
         case "awaiting_answer":
-          return ok(questionReply(context, session));
+          return ok(questionView(context, session));
         case "awaiting_evaluation":
           return ok({ kind: "evaluate", sessionId, request: evaluationRequest(context, session) });
         case "completed":
-          return ok(progressReply(context, { kind: "completed", session }));
+          return ok(completedView(context, session));
         case "abandoned":
-          return ok({ kind: "abandoned", sessionId, reason: session.reason });
-        case "awaiting_question": {
-          const progress = advance(context, session, now());
-          return progress.ok ? persist(loaded.value, progress.value) : progress;
-        }
+          return ok(abandonedView(context, session));
+        case "awaiting_question":
+          return continueWith(loaded.value, advance(context, session, now()));
         case "created":
         case "scoring":
-          return err({ code: "wrong_status", sessionId, expected: "awaiting_question", actual: session.status });
+          return err(wrongStatus(session, "awaiting_question"));
       }
     },
 
-    abandon: async (sessionId: string, reason: string): Served<Reply> => {
-      const loaded = await loadContext(sessionId);
-      if (!loaded.ok) {
-        return loaded;
-      }
-      const { session } = loaded.value;
-      if (!isActive(session)) {
-        return err({ code: "wrong_status", sessionId, expected: "awaiting_answer", actual: session.status });
-      }
-      const abandoned = abandonSession(session, now(), reason);
-      if (!abandoned.ok) {
-        return abandoned;
-      }
-      const saved = await save(loaded.value.record, abandoned.value);
-      return saved.ok ? ok({ kind: "abandoned", sessionId, reason }) : saved;
-    },
+    abandon: repository.abandon,
   };
 }

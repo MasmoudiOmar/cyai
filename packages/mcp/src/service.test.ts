@@ -187,6 +187,7 @@ describe("interview service", () => {
       expect(unwrap(await h.service.resume(SESSION_ID))).toEqual({
         kind: "abandoned",
         sessionId: SESSION_ID,
+        role: "AI Trainer",
         reason: "Had to leave",
       });
     });

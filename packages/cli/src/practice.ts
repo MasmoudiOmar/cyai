@@ -1,92 +1,60 @@
-import {
-  abandonSession,
-  answerRun,
-  formatDebrief,
-  nowIso,
-  resolveInterview,
-  startRun,
-  type CyaiError,
-  type InterviewContext,
-  type RunnerDeps,
-  type SessionStore,
-  type StoreError,
-  type SettledProgress,
-  type TemplateCatalog,
-} from "@cyai/core";
-import { ok, type CandidateContext, type Result, type SessionIn, type SessionRecord } from "@cyai/spec";
+import { formatDebrief, type PracticeError, type PracticeService } from "@cyai/core";
+import { ok, type PracticeView, type QuestionView, type Result, type StartPractice } from "@cyai/spec";
 
 import { QUIT_COMMAND, type Terminal } from "./terminal.js";
 
-export interface PracticeDeps extends RunnerDeps {
-  readonly catalog: TemplateCatalog;
-  readonly store: SessionStore;
+export interface PracticeDeps {
+  readonly service: PracticeService;
   readonly terminal: Terminal;
-}
-
-export interface PracticeInput {
-  readonly interviewId: string;
-  readonly candidate: CandidateContext;
 }
 
 export type PracticeOutcome = "completed" | "abandoned";
 
-const QUIT_REASON = "Quit from the terminal.";
+export const QUIT_REASON = "Quit from the terminal.";
 
-function formatQuestion(context: InterviewContext, session: SessionIn<"awaiting_answer">): string {
-  const { prepSeconds, answer } = context.profile.timing;
-  const followUp = session.pending.followUpOf === undefined ? "" : " (follow-up)";
-  const prep = prepSeconds > 0 ? `${String(prepSeconds)}s to prepare, then ` : "";
+function formatQuestion(view: QuestionView): string {
+  const followUp = view.followUp ? " (follow-up)" : "";
+  const prep = view.prepSeconds > 0 ? `${String(view.prepSeconds)}s to prepare, then ` : "";
   return [
     "",
-    `Question ${String(session.turns.length + 1)}${followUp}`,
-    session.pending.text,
-    `(${prep}aim for ${String(answer.softSeconds)}s, hard limit ${String(answer.hardSeconds)}s. Finish with an empty line; ${QUIT_COMMAND} to stop.)`,
+    `Question ${String(view.number)} of up to ${String(view.maxQuestions)}${followUp}`,
+    view.text,
+    `(${prep}aim for ${String(view.softSeconds)}s, hard limit ${String(view.hardSeconds)}s. Finish with an empty line; ${QUIT_COMMAND} to stop.)`,
     "",
   ].join("\n");
 }
 
-/** Runs an interview in the terminal with a model as interviewer, saving after every step. */
-export async function practice(deps: PracticeDeps, input: PracticeInput): Promise<Result<PracticeOutcome, CyaiError>> {
-  const context = resolveInterview(deps.catalog, input.interviewId, input.candidate);
-  if (!context.ok) {
-    return context;
-  }
-  const save = (
-    session: SessionIn<"awaiting_answer" | "completed" | "abandoned">,
-  ): Promise<Result<SessionRecord, StoreError>> =>
-    deps.store.save({ session, candidate: input.candidate });
-
-  deps.terminal.write(`${context.value.interview.role}: ${context.value.profile.name}\n`);
-  let progress: Result<SettledProgress, CyaiError> = await startRun(context.value, deps);
+/** Runs an interview in the terminal. The service saves the session after every step. */
+export async function practice(deps: PracticeDeps, input: StartPractice): Promise<Result<PracticeOutcome, PracticeError>> {
+  const { service, terminal } = deps;
+  let view: Result<PracticeView, PracticeError> = await service.start(input);
+  let first = true;
   for (;;) {
-    if (!progress.ok) {
-      return progress;
+    if (!view.ok) {
+      return view;
     }
-    const saved = await save(progress.value.session);
-    if (!saved.ok) {
-      return saved;
+    const current = view.value;
+    if (first) {
+      terminal.write(`Practice interview: ${current.role}\n`);
+      first = false;
     }
-    if (progress.value.kind === "completed") {
-      const { session } = progress.value;
-      deps.terminal.write(`\n${formatDebrief(context.value.interview.role, session.scorecard, session.turns)}\n`);
-      return ok("completed");
-    }
-    const { session } = progress.value;
-    deps.terminal.write(formatQuestion(context.value, session));
-    const answer = await deps.terminal.readAnswer();
-    if (answer === undefined) {
-      const abandoned = abandonSession(session, nowIso(deps.clock), QUIT_REASON);
-      if (!abandoned.ok) {
-        return abandoned;
+    switch (current.kind) {
+      case "completed":
+        terminal.write(`\n${formatDebrief(current.role, current.scorecard, current.turns)}\n`);
+        return ok("completed");
+      case "abandoned":
+        terminal.write(`\nStopped. Session ${current.sessionId} was saved as abandoned.\n`);
+        return ok("abandoned");
+      case "question": {
+        terminal.write(formatQuestion(current));
+        const answer = await terminal.readAnswer();
+        if (answer === undefined) {
+          view = await service.abandon(current.sessionId, QUIT_REASON);
+        } else {
+          terminal.write("Evaluating...\n");
+          view = await service.answer(current.sessionId, answer);
+        }
       }
-      const stored = await save(abandoned.value);
-      if (!stored.ok) {
-        return stored;
-      }
-      deps.terminal.write(`\nStopped. Session ${session.id} was saved as abandoned.\n`);
-      return ok("abandoned");
     }
-    deps.terminal.write("Evaluating...\n");
-    progress = await answerRun(context.value, deps, session, answer);
   }
 }

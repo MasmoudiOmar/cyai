@@ -8,7 +8,5 @@ export {
   type Served,
   type ServiceDeps,
   type ServiceError,
-  type StartInput,
-  type WrongStatus,
 } from "./service.js";
 export { MOCK_INTERVIEW_PROMPT, TOOLS } from "./tool-names.js";

@@ -1,6 +1,7 @@
-import { aiTrainerInterview, EPOCH_MS, genericProfile, starRubric } from "@cyai/fixtures";
+import { aiTrainerInterview, EPOCH_MS, genericProfile, starRubric, unwrap } from "@cyai/fixtures";
 import { err, ok, type CandidateContext, type TurnEvaluation } from "@cyai/spec";
 
+import { buildCatalog, type TemplateCatalog } from "../catalog/catalog.js";
 import type { InterviewContext } from "../interview/context.js";
 import type { Clock, ModelError, ModelRequest, TextModel } from "../ports/index.js";
 
@@ -60,3 +61,9 @@ export function questionJson(text: string): string {
 export function evaluationJson(evaluation: TurnEvaluation): string {
   return JSON.stringify(evaluation);
 }
+
+/** A catalog holding exactly the fixture templates. */
+export function fixtureCatalog(): TemplateCatalog {
+  return unwrap(buildCatalog({ profiles: [genericProfile], rubrics: [starRubric], interviews: [aiTrainerInterview] }));
+}
+

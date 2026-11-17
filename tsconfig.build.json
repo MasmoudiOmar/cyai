@@ -20,6 +20,9 @@
       "path": "packages/mcp/tsconfig.build.json"
     },
     {
+      "path": "packages/server/tsconfig.build.json"
+    },
+    {
       "path": "packages/cli/tsconfig.build.json"
     }
   ]
