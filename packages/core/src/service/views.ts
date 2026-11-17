@@ -1,10 +1,11 @@
 import type { AbandonedView, CompletedView, QuestionView, SessionIn } from "@cyai/spec";
 
+import { interviewClock } from "../interview/clock.js";
 import type { InterviewContext } from "../interview/context.js";
 
 /** The question the candidate must answer now. */
 export function questionView(context: InterviewContext, session: SessionIn<"awaiting_answer">): QuestionView {
-  const { timing, turnPolicy } = context.profile;
+  const { turnPolicy } = context.profile;
   return {
     kind: "question",
     sessionId: session.id,
@@ -14,9 +15,7 @@ export function questionView(context: InterviewContext, session: SessionIn<"awai
     maxQuestions: turnPolicy.maxQuestions,
     text: session.pending.text,
     followUp: session.pending.followUpOf !== undefined,
-    prepSeconds: timing.prepSeconds,
-    softSeconds: timing.answer.softSeconds,
-    hardSeconds: timing.answer.hardSeconds,
+    ...interviewClock(context.profile),
   };
 }
 

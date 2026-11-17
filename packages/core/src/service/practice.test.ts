@@ -70,6 +70,7 @@ describe("practice service", () => {
       prepSeconds: 0,
       softSeconds: 120,
       hardSeconds: 180,
+      turnTaking: { answer: "typed", endOfTurn: "submit" },
     });
     expect(store.records.get(SESSION_ID)?.candidate).toEqual({ resume: "Annotator." });
 

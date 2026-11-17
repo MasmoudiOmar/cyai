@@ -1,5 +1,14 @@
-import { describeError, type PracticeError, type PracticeService } from "@cyai/core";
-import { answerSchema, describeIssues, startPracticeSchema, type AppInfo, type ErrorBody, type Result } from "@cyai/spec";
+import { describeError, type AudioClip, type PracticeError, type PracticeService, type SpeechServices } from "@cyai/core";
+import {
+  answerSchema,
+  describeIssues,
+  speakSchema,
+  startPracticeSchema,
+  type AppInfo,
+  type ErrorBody,
+  type Result,
+  type Transcription,
+} from "@cyai/spec";
 import type { z } from "zod";
 
 export interface ApiRequest {
@@ -7,11 +16,15 @@ export interface ApiRequest {
   /** Path below `/api`, without the query string, e.g. `/sessions/<id>/answer`. */
   readonly path: string;
   readonly body: unknown;
+  /** The uploaded recording, for `POST /transcribe`. */
+  readonly audio?: AudioClip;
 }
 
 export interface ApiResponse {
   readonly status: number;
   readonly body: unknown;
+  /** Sent instead of `body` when present. */
+  readonly audio?: AudioClip;
 }
 
 export const ABANDON_REASON = "Stopped in the web app.";
@@ -59,11 +72,59 @@ function parsed<T>(schema: z.ZodType<T>, body: unknown, use: (value: T) => Promi
   return result.success ? use(result.data) : Promise.resolve(failure(400, describeIssues(result.error)));
 }
 
+export const NO_TRANSCRIBER = "No speech-to-text server is configured; the browser transcribes instead.";
+export const NO_SPEAKER = "No text-to-speech server is configured; the browser speaks instead.";
+
+function modelFailure(message: string): ApiResponse {
+  return failure(502, message);
+}
+
+/** Speech-to-text and the interviewer's voice, each answered with 503 when not configured. */
+async function speechRoute(speech: SpeechServices, path: string, request: ApiRequest): Promise<ApiResponse> {
+  if (path === "/transcribe") {
+    if (speech.transcriber === undefined) {
+      return failure(503, NO_TRANSCRIBER);
+    }
+    if (request.audio === undefined) {
+      return failure(415, "Send the recording as audio/webm, audio/ogg, audio/mp4 or audio/wav.");
+    }
+    const text = await speech.transcriber.transcribe(request.audio);
+    if (!text.ok) {
+      return modelFailure(text.error.message);
+    }
+    const body: Transcription = { text: text.value };
+    return { status: 200, body };
+  }
+  const { speaker } = speech;
+  if (speaker === undefined) {
+    return failure(503, NO_SPEAKER);
+  }
+  return parsed(speakSchema, request.body, async ({ text }) => {
+    const audio = await speaker.speak(text);
+    return audio.ok ? { status: 200, body: undefined, audio: audio.value } : modelFailure(audio.error.message);
+  });
+}
+
 /** Routes one API call to the practice service. Transport-free so it can be tested without sockets. */
-export function createApi(service: PracticeService, info: AppInfo): (request: ApiRequest) => Promise<ApiResponse> {
-  return async ({ method, path, body }) => {
+export function createApi(
+  service: PracticeService,
+  info: Omit<AppInfo, "voice">,
+  speech: SpeechServices = {},
+): (request: ApiRequest) => Promise<ApiResponse> {
+  const appInfo: AppInfo = {
+    ...info,
+    voice: {
+      transcription: speech.transcriber === undefined ? "browser" : "whisper",
+      voice: speech.speaker === undefined ? "browser" : "endpoint",
+    },
+  };
+  return async (request) => {
+    const { method, path, body } = request;
+    if (method === "POST" && (path === "/transcribe" || path === "/speak")) {
+      return speechRoute(speech, path, request);
+    }
     if (method === "GET" && path === "/info") {
-      return { status: 200, body: info };
+      return { status: 200, body: appInfo };
     }
     if (method === "GET" && path === "/interviews") {
       return { status: 200, body: service.listInterviews() };
@@ -84,7 +145,7 @@ export function createApi(service: PracticeService, info: AppInfo): (request: Ap
         return served(service.resume(sessionId));
       }
       if (method === "POST" && action === "/answer") {
-        return parsed(answerSchema, body, ({ answer }) => served(service.answer(sessionId, answer)));
+        return parsed(answerSchema, body, ({ answer, speech: timing }) => served(service.answer(sessionId, answer, timing)));
       }
       if (method === "POST" && action === "/abandon") {
         return served(service.abandon(sessionId, ABANDON_REASON));

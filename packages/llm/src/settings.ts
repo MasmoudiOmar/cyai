@@ -1,8 +1,9 @@
-import type { TextModel } from "@cyai/core";
+import type { SpeechServices, TextModel } from "@cyai/core";
 import { err, ok, type Result } from "@cyai/spec";
 
 import { createAnthropicModel, DEFAULT_ANTHROPIC_MODEL } from "./anthropic.js";
 import { createOpenAICompatibleModel, DEFAULT_OPENAI_COMPATIBLE_BASE_URL } from "./openai-compatible.js";
+import { createSpeechEndpoint, createWhisperTranscriber } from "./speech.js";
 
 export type Provider = "anthropic" | "openai";
 
@@ -42,4 +43,29 @@ export function describeModel(settings: ModelSettings): string {
   return settings.provider === "anthropic"
     ? (settings.model ?? DEFAULT_ANTHROPIC_MODEL)
     : `${settings.model ?? "(no model)"} at ${settings.baseUrl ?? DEFAULT_OPENAI_COMPATIBLE_BASE_URL}`;
+}
+
+/** Where speech-to-text and the interviewer's voice come from. Both are optional. */
+export interface SpeechSettings {
+  readonly transcription?: { readonly baseUrl: string; readonly model?: string };
+  readonly voice?: { readonly baseUrl: string; readonly model?: string; readonly voice?: string };
+}
+
+function nonEmpty(value: string | undefined): string | undefined {
+  return value === undefined || value.length === 0 ? undefined : value;
+}
+
+/** Speech endpoints authenticate with `CYAI_SPEECH_API_KEY`, else `OPENAI_API_KEY`, else nothing (local servers). */
+export function createSpeech(
+  settings: SpeechSettings,
+  env: NodeJS.ProcessEnv,
+  fetch: typeof globalThis.fetch = globalThis.fetch,
+): SpeechServices {
+  const apiKey = nonEmpty(env["CYAI_SPEECH_API_KEY"]) ?? nonEmpty(env["OPENAI_API_KEY"]);
+  const auth = apiKey === undefined ? { fetch } : { apiKey, fetch };
+  const { transcription, voice } = settings;
+  return {
+    ...(transcription === undefined ? {} : { transcriber: createWhisperTranscriber({ ...transcription, ...auth }) }),
+    ...(voice === undefined ? {} : { speaker: createSpeechEndpoint({ ...voice, ...auth }) }),
+  };
 }

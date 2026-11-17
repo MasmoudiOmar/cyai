@@ -13,6 +13,7 @@ export const interview: InterviewSummary = {
   prepSeconds: 0,
   softSeconds: 60,
   hardSeconds: 90,
+  turnTaking: { answer: "typed", endOfTurn: "submit" },
 };
 
 export const question: QuestionView = {
@@ -27,6 +28,7 @@ export const question: QuestionView = {
   prepSeconds: 0,
   softSeconds: 60,
   hardSeconds: 90,
+  turnTaking: { answer: "typed", endOfTurn: "submit" },
 };
 
 export const completed: CompletedView = {
@@ -76,7 +78,7 @@ export const session: SessionSummary = {
 /** An API client answering with the fixtures above; override any call. */
 export function fakeApi(overrides: Partial<ApiClient> = {}): ApiClient {
   return {
-    info: () => Promise.resolve(ok({ version: "0.1.0", model: "claude-opus-5-5" })),
+    info: () => Promise.resolve(ok({ version: "0.1.0", model: "claude-opus-5-5", voice: { transcription: "browser", voice: "browser" } })),
     interviews: () => Promise.resolve(ok([interview])),
     sessions: () => Promise.resolve(ok([session])),
     start: () => Promise.resolve(ok(question)),

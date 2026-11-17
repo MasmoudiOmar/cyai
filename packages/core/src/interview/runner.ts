@@ -1,4 +1,6 @@
-import { err, ok, type Result, type SessionIn } from "@cyai/spec";
+import { err, ok, type Result, type SessionIn, type SpeechMeasurement } from "@cyai/spec";
+
+import { analyzeDelivery } from "../delivery/analyze.js";
 
 import type { ModelError, ModelRequest, TextModel } from "../ports/index.js";
 import { answerQuestion } from "../session/machine.js";
@@ -66,14 +68,20 @@ async function evaluateRun(context: InterviewContext, deps: RunnerDeps, session:
   return progress.ok ? settle(context, deps, progress.value) : progress;
 }
 
-/** Records the candidate's answer, has the model evaluate it, and returns the next question or the result. */
+/**
+ * Records the candidate's answer, has the model evaluate it, and returns the next question or the result.
+ * Microphone timing is only analysed when the interview is spoken.
+ */
 export async function answerRun(
   context: InterviewContext,
   deps: RunnerDeps,
   session: SessionIn<"awaiting_answer">,
   text: string,
+  speech?: SpeechMeasurement,
 ): Run {
-  const answered = answerQuestion(session, text, nowIso(deps.clock));
+  const delivery =
+    speech === undefined || context.profile.turnTaking.answer === "typed" ? undefined : analyzeDelivery(text, speech);
+  const answered = answerQuestion(session, text, nowIso(deps.clock), delivery);
   return answered.ok ? evaluateRun(context, deps, answered.value) : answered;
 }
 

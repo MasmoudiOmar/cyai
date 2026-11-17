@@ -1,0 +1,27 @@
+# Conversational voice screener in the style of Mercor and micro1: the interviewer speaks, you
+# answer out loud, it waits for a long pause before moving on, and drills into what you said.
+id: voice-conversational-generic
+version: 1
+name: Conversational voice screener (generic)
+description: Spoken interview. The AI asks out loud, listens until you pause, then follows up on what you just said. Long silences make it cut in.
+format: live
+modalities: [voice]
+timing:
+  totalMinutes: 20
+  prepSeconds: 0
+  answer:
+    softSeconds: 120
+    hardSeconds: 180
+turnTaking:
+  answer: spoken
+  endOfTurn: silence
+  endSilenceSeconds: 4
+  nudgeAfterSeconds: 10
+turnPolicy:
+  maxQuestions: 7
+  maxFollowUpsPerQuestion: 2
+  followUpTriggers: [vague, no_example, unverified_claim]
+persona:
+  tone: neutral-friendly, brief spoken acknowledgements, never evaluative
+  reactsEmotionally: false
+contextSources: [resume, job_description]

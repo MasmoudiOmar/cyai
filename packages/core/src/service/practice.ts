@@ -6,6 +6,7 @@ import {
   type PracticeView,
   type Result,
   type SessionSummary,
+  type SpeechMeasurement,
   type StartPractice,
 } from "@cyai/spec";
 
@@ -37,7 +38,7 @@ export interface PracticeService {
   readonly listInterviews: () => readonly InterviewSummary[];
   readonly listSessions: () => Promise<Result<readonly SessionSummary[], StoreError>>;
   readonly start: (input: StartPractice) => Practiced;
-  readonly answer: (sessionId: string, answer: string) => Practiced;
+  readonly answer: (sessionId: string, answer: string, speech?: SpeechMeasurement) => Practiced;
   /** The current view of a session, running any model step it was left waiting on. */
   readonly resume: (sessionId: string) => Practiced;
   readonly abandon: (sessionId: string, reason: string) => Practiced;
@@ -93,13 +94,13 @@ export function createPracticeService(deps: PracticeServiceDeps): PracticeServic
       return persist(context.value, candidate, await startRun(context.value, deps));
     },
 
-    answer: async (sessionId: string, answer: string): Practiced => {
+    answer: async (sessionId: string, answer: string, speech?: SpeechMeasurement): Practiced => {
       const loaded = await repository.loadIn(sessionId, "awaiting_answer");
       if (!loaded.ok) {
         return loaded;
       }
       const { context, record, session } = loaded.value;
-      return persist(context, record.candidate, await answerRun(context, deps, session, answer));
+      return persist(context, record.candidate, await answerRun(context, deps, session, answer, speech));
     },
 
     resume: async (sessionId: string): Practiced => {

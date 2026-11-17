@@ -11,6 +11,7 @@ import {
   boundPort,
   DEFAULT_HOST,
   isLocalHost,
+  MAX_AUDIO_BYTES,
   MAX_BODY_BYTES,
   requestTarget,
   serverUrl,
@@ -28,7 +29,7 @@ interface Reply {
 interface Send {
   readonly method?: string;
   readonly headers?: Readonly<Record<string, string>>;
-  readonly body?: string;
+  readonly body?: string | Buffer;
 }
 
 let root: string;
@@ -52,7 +53,13 @@ function send(path: string, { method = "GET", headers = {}, body }: Send = {}): 
 
 const api = (request: ApiRequest): Promise<ApiResponse> => {
   calls.push(request);
-  return request.path === "/boom" ? Promise.reject(new Error("exploded")) : Promise.resolve({ status: 200, body: { echo: request.body } });
+  if (request.path === "/boom") {
+    return Promise.reject(new Error("exploded"));
+  }
+  if (request.path === "/speak") {
+    return Promise.resolve({ status: 200, body: undefined, audio: { bytes: new Uint8Array([0x49, 0x44]), type: "audio/mpeg" } });
+  }
+  return Promise.resolve({ status: 200, body: { echo: request.body } });
 };
 
 beforeAll(async () => {
@@ -111,6 +118,22 @@ describe("web server", () => {
     expect(calls.at(-1)).toEqual({ method: "POST", path: "/sessions", body: { interviewId: "x" } });
     const local = { ...JSON_POST.headers, origin: `http://localhost:${String(port)}` };
     expect(await send("/api/sessions", { method: "POST", headers: local, body: "{}" })).toMatchObject({ status: 200 });
+  });
+
+  it("accepts recordings as audio and sends synthesised speech as audio", async () => {
+    const upload = { method: "POST", headers: { "content-type": "audio/webm; codecs=opus" }, body: Buffer.from([1, 2, 3]) };
+    expect(await send("/api/transcribe", upload)).toMatchObject({ status: 200 });
+    expect(calls.at(-1)).toEqual({
+      method: "POST",
+      path: "/transcribe",
+      body: undefined,
+      audio: { bytes: new Uint8Array([1, 2, 3]), type: "audio/webm" },
+    });
+    const spoken = await send("/api/speak", { ...JSON_POST, body: '{"text":"Hi"}' });
+    expect(spoken).toMatchObject({ status: 200, body: "ID", headers: { "content-type": "audio/mpeg" } });
+    expect(spoken.headers["content-security-policy"]).toContain("media-src 'self' blob:");
+    const tooLong = { ...upload, body: Buffer.alloc(MAX_AUDIO_BYTES + 1) };
+    expect(await send("/api/transcribe", tooLong)).toMatchObject({ status: 413 });
   });
 
   it("rejects unsafe or malformed API requests", async () => {

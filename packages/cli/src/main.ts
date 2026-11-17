@@ -14,10 +14,11 @@ import {
   type IdGenerator,
   type PracticeService,
   type SessionStore,
+  type SpeechServices,
   type TemplateCatalog,
   type TextModel,
 } from "@cyai/core";
-import { createModel, describeModel, type ModelSettings } from "@cyai/llm";
+import { createModel, createSpeech, describeModel, type ModelSettings, type SpeechSettings } from "@cyai/llm";
 import { startStdioServer } from "@cyai/mcp";
 import {
   createFileSessionStore,
@@ -41,6 +42,7 @@ export interface CliServices {
   readonly loadCatalog: (directories: readonly string[]) => Promise<Result<TemplateCatalog, LoadCatalogError>>;
   readonly createStore: (dataDir: string) => SessionStore;
   readonly createModel: (settings: ModelSettings, env: NodeJS.ProcessEnv) => Result<TextModel, string>;
+  readonly createSpeech: (settings: SpeechSettings, env: NodeJS.ProcessEnv) => SpeechServices;
   readonly readText: (path: string) => Promise<string>;
   readonly serveMcp: (env: NodeJS.ProcessEnv) => Promise<string | undefined>;
   /** Folder of the built web app, or why it is unavailable. */
@@ -68,6 +70,7 @@ export const nodeServices: CliServices = {
   loadCatalog: (directories) => loadCatalog({ directories }),
   createStore: createFileSessionStore,
   createModel,
+  createSpeech,
   readText: (path) => readFile(path, "utf8"),
   serveMcp: startStdioServer,
   webRoot: builtWebRoot,
@@ -158,7 +161,11 @@ async function runUi(services: CliServices, io: CliIO, command: UiCommand): Prom
   if (!service.ok) {
     return service;
   }
-  const api = createApi(service.value, { version: CYAI_VERSION, model: describeModel(command.model) });
+  const api = createApi(
+    service.value,
+    { version: CYAI_VERSION, model: describeModel(command.model) },
+    services.createSpeech(command.speech, io.env),
+  );
   const server = await services.serveWeb({ api, staticDir: staticDir.value, port: command.port });
   if (!server.ok) {
     return server;

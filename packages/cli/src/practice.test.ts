@@ -1,10 +1,10 @@
-import { createPracticeService, type TemplateCatalog } from "@cyai/core";
+import { buildCatalog, createPracticeService, type TemplateCatalog } from "@cyai/core";
 import { evaluationJson, manualClock, modelError, questionJson, scriptedModel, type ScriptedReply } from "@cyai/core/test-support";
-import { evaluation, SESSION_ID, unwrap, unwrapErr } from "@cyai/fixtures";
+import { aiTrainerInterview, evaluation, SESSION_ID, spokenProfile, starRubric, unwrap, unwrapErr } from "@cyai/fixtures";
 import { fixtureCatalog, memoryStore, type MemoryStore } from "@cyai/mcp/test-support";
 import { describe, expect, it } from "vitest";
 
-import { practice, QUIT_REASON } from "./practice.js";
+import { practice, QUIT_REASON, SPOKEN_IN_TERMINAL } from "./practice.js";
 import { scriptedTerminal, type ScriptedTerminal } from "./test-support/terminal.js";
 
 const COMPLETE_RUN: readonly ScriptedReply[] = [
@@ -50,6 +50,22 @@ describe("practice", () => {
     expect(output).toContain("Question 2 of up to 2\nWhich dataset was hardest?\n");
     expect(output).toContain("Evaluating...\n");
     expect(output).toContain("## Interview complete: AI Trainer");
+  });
+
+  it("explains that spoken interviews are typed in the terminal", async () => {
+    const spoken = unwrap(
+      buildCatalog({
+        profiles: [spokenProfile],
+        rubrics: [starRubric],
+        interviews: [{ ...aiTrainerInterview, profileId: spokenProfile.id }],
+      }),
+    );
+    const { run, terminal } = setup([undefined], [], spoken);
+    await run();
+    expect(terminal.output()).toContain(`Practice interview: AI Trainer\n${SPOKEN_IN_TERMINAL}\n`);
+    const typed = setup([undefined]);
+    await typed.run();
+    expect(typed.terminal.output()).not.toContain(SPOKEN_IN_TERMINAL);
   });
 
   it("labels follow-ups", async () => {

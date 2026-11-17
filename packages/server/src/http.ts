@@ -12,6 +12,11 @@ export const DEFAULT_HOST = "127.0.0.1";
 export const DEFAULT_PORT = 4477;
 /** Resumes are pasted as text; anything bigger than this is not a practice request. */
 export const MAX_BODY_BYTES = 1024 * 1024;
+/** A three-minute answer in compressed audio is a few megabytes; Whisper servers accept up to 25 MB. */
+export const MAX_AUDIO_BYTES = 25 * 1024 * 1024;
+
+/** Recordings the browser may upload for transcription. */
+export const AUDIO_TYPES: ReadonlySet<string> = new Set(["audio/webm", "audio/ogg", "audio/mp4", "audio/wav"]);
 
 const API_PREFIX = "/api";
 const LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1", "[::1]"]);
@@ -31,7 +36,7 @@ const CONTENT_TYPES: Readonly<Record<string, string>> = {
 };
 
 const SECURITY_HEADERS = {
-  "content-security-policy": "default-src 'self'; img-src 'self' data:; style-src 'self'; frame-ancestors 'none'",
+  "content-security-policy": "default-src 'self'; img-src 'self' data:; media-src 'self' blob:; style-src 'self'; frame-ancestors 'none'",
   "x-content-type-options": "nosniff",
   "referrer-policy": "no-referrer",
 };
@@ -64,6 +69,14 @@ function sendJson(response: ServerResponse, { status, body }: ApiResponse): void
   send(response, status, JSON_TYPE, JSON.stringify(body));
 }
 
+function sendApi(response: ServerResponse, api: ApiResponse): void {
+  if (api.audio === undefined) {
+    sendJson(response, api);
+    return;
+  }
+  send(response, api.status, api.audio.type, Buffer.from(api.audio.bytes));
+}
+
 function sendError(response: ServerResponse, status: number, error: string): void {
   const body: ErrorBody = { error };
   sendJson(response, { status, body });
@@ -90,41 +103,49 @@ function isLocalOrigin(origin: string | undefined): boolean {
 }
 
 /** Collects the body; an oversized one is drained and rejected so the 413 still reaches the client. */
-function readBody(request: IncomingMessage): Promise<Result<string, ApiResponse>> {
+function readBody(request: IncomingMessage, limit: number): Promise<Result<Buffer, ApiResponse>> {
   return new Promise((resolve) => {
     const chunks: Buffer[] = [];
     let size = 0;
     request.on("data", (chunk: Buffer) => {
       size += chunk.length;
       chunks.push(chunk);
-      if (size > MAX_BODY_BYTES) {
+      if (size > limit) {
         chunks.length = 0;
       }
     });
     request.on("end", () => {
-      resolve(
-        size > MAX_BODY_BYTES
-          ? err({ status: 413, body: { error: "The request is too large." } })
-          : ok(Buffer.concat(chunks).toString("utf8")),
-      );
+      resolve(size > limit ? err({ status: 413, body: { error: "The request is too large." } }) : ok(Buffer.concat(chunks)));
     });
   });
 }
 
-async function readJson(request: IncomingMessage): Promise<Result<unknown, ApiResponse>> {
+type RequestBody = Pick<ApiRequest, "body" | "audio">;
+
+function mediaType(request: IncomingMessage): string | undefined {
+  return request.headers["content-type"]?.split(";")[0]?.trim().toLowerCase();
+}
+
+/** A POST body: an audio recording when one is sent, JSON otherwise. */
+async function readRequestBody(request: IncomingMessage): Promise<Result<RequestBody, ApiResponse>> {
   if (request.method !== "POST") {
-    return ok(undefined);
+    return ok({ body: undefined });
   }
-  if (request.headers["content-type"]?.split(";")[0]?.trim() !== "application/json") {
+  const type = mediaType(request);
+  if (type !== undefined && AUDIO_TYPES.has(type)) {
+    const bytes = await readBody(request, MAX_AUDIO_BYTES);
+    return bytes.ok ? ok({ body: undefined, audio: { bytes: new Uint8Array(bytes.value), type } }) : bytes;
+  }
+  if (type !== "application/json") {
     return err({ status: 415, body: { error: "Send JSON with Content-Type: application/json." } });
   }
-  const text = await readBody(request);
+  const text = await readBody(request, MAX_BODY_BYTES);
   if (!text.ok) {
     return text;
   }
   try {
-    const body: unknown = JSON.parse(text.value);
-    return ok(body);
+    const body: unknown = JSON.parse(text.value.toString("utf8"));
+    return ok({ body });
   } catch {
     return err({ status: 400, body: { error: "The request body is not valid JSON." } });
   }
@@ -192,8 +213,8 @@ export function createRequestHandler(options: WebServerOptions): Handler {
           sendError(response, 403, "Cross-origin requests are not allowed.");
           return;
         }
-        const body = await readJson(request);
-        sendJson(response, body.ok ? await options.api({ method, path: path.slice(API_PREFIX.length), body: body.value }) : body.error);
+        const body = await readRequestBody(request);
+        sendApi(response, body.ok ? await options.api({ method, path: path.slice(API_PREFIX.length), ...body.value }) : body.error);
         return;
       }
       if (method !== "GET" && method !== "HEAD") {

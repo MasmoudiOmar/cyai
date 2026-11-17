@@ -30,6 +30,29 @@ export interface TextModel {
   readonly generate: (request: ModelRequest) => Promise<Result<string, ModelError>>;
 }
 
+/** Recorded or synthesised audio. */
+export interface AudioClip {
+  readonly bytes: Uint8Array<ArrayBuffer>;
+  /** Media type, e.g. `audio/webm`. */
+  readonly type: string;
+}
+
+/** Speech-to-text, e.g. a Whisper server. Speech services fail the way models do. */
+export interface Transcriber {
+  readonly transcribe: (audio: AudioClip) => Promise<Result<string, ModelError>>;
+}
+
+/** Text-to-speech for the interviewer's voice. */
+export interface Speaker {
+  readonly speak: (text: string) => Promise<Result<AudioClip, ModelError>>;
+}
+
+/** The speech services configured for spoken interviews; the browser stands in for missing ones. */
+export interface SpeechServices {
+  readonly transcriber?: Transcriber;
+  readonly speaker?: Speaker;
+}
+
 export interface StoreError {
   readonly code: "store_error";
   readonly reason: "not_found" | "corrupt" | "io";

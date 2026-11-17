@@ -20,7 +20,8 @@ describe("api client", () => {
   it("calls each endpoint and validates the response", async () => {
     const calls: Call[] = [];
     const client = (body: unknown): ReturnType<typeof createApiClient> => createApiClient(respond(200, JSON.stringify(body), calls));
-    expect(unwrap(await client({ version: "1", model: "m" }).info())).toEqual({ version: "1", model: "m" });
+    const info = { version: "1", model: "m", voice: { transcription: "browser", voice: "browser" } };
+    expect(unwrap(await client(info).info())).toEqual(info);
     expect(unwrap(await client([interview]).interviews())).toEqual([interview]);
     expect(unwrap(await client([session]).sessions())).toEqual([session]);
     expect(unwrap(await client(question).start({ interviewId: interview.id }))).toEqual(question);
@@ -49,9 +50,9 @@ describe("api client", () => {
   });
 
   it("uses the browser fetch by default", async () => {
-    vi.stubGlobal("fetch", respond(200, '{"version":"1","model":"m"}'));
+    vi.stubGlobal("fetch", respond(200, '{"version":"1","model":"m","voice":{"transcription":"whisper","voice":"endpoint"}}'));
     try {
-      expect(unwrap(await createApiClient().info())).toEqual({ version: "1", model: "m" });
+      expect(unwrap(await createApiClient().info())).toMatchObject({ version: "1", model: "m" });
     } finally {
       vi.unstubAllGlobals();
     }

@@ -1,16 +1,19 @@
-# One-way recorded interview: fixed prep and answer windows, no follow-ups.
+# One-way recorded interview: fixed prep and spoken answer windows, no follow-ups.
 id: async-video-generic
 version: 1
 name: Async video screen (generic)
-description: Recorded one-way interview with a short prep timer and a strict answer window. Nobody reacts while you answer.
+description: Recorded one-way interview. The question appears, a short prep timer runs, then you answer out loud until the window closes. Nobody reacts while you answer.
 format: async
-modalities: [video, text]
+modalities: [video, voice]
 timing:
   totalMinutes: 20
   prepSeconds: 30
   answer:
     softSeconds: 90
     hardSeconds: 120
+turnTaking:
+  answer: spoken
+  endOfTurn: timer
 turnPolicy:
   maxQuestions: 5
   maxFollowUpsPerQuestion: 0

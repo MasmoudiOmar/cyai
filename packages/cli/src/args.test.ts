@@ -38,12 +38,33 @@ describe("parseCommand", () => {
   });
 
   it("parses the ui command with its defaults and options", () => {
-    expect(unwrap(parseCommand(["ui"]))).toEqual({ kind: "ui", port: 4477, open: true, model: { provider: "anthropic" } });
+    expect(unwrap(parseCommand(["ui"]))).toEqual({
+      kind: "ui",
+      port: 4477,
+      open: true,
+      model: { provider: "anthropic" },
+      speech: {},
+    });
     expect(unwrap(parseCommand(["ui", "--port", "0", "--no-open", "--model", "claude-sonnet-5-5"]))).toEqual({
       kind: "ui",
       port: 0,
       open: false,
       model: { provider: "anthropic", model: "claude-sonnet-5-5" },
+      speech: {},
+    });
+  });
+
+  it("parses speech servers for spoken interviews", () => {
+    const stt = ["--stt-url", "http://localhost:8000/v1", "--stt-model", "base.en"];
+    const tts = ["--tts-url", "http://localhost:8880/v1", "--tts-model", "kokoro", "--tts-voice", "af_heart"];
+    expect(unwrap(parseCommand(["ui", ...stt, ...tts]))).toMatchObject({
+      speech: {
+        transcription: { baseUrl: "http://localhost:8000/v1", model: "base.en" },
+        voice: { baseUrl: "http://localhost:8880/v1", model: "kokoro", voice: "af_heart" },
+      },
+    });
+    expect(unwrap(parseCommand(["ui", "--stt-url", "http://s", "--tts-url", "http://t"]))).toMatchObject({
+      speech: { transcription: { baseUrl: "http://s" }, voice: { baseUrl: "http://t" } },
     });
   });
 
@@ -54,6 +75,8 @@ describe("parseCommand", () => {
     [["practice"], "practice needs an interview id. Run `cyai list` to see them."],
     [["practice", "swe", "--provider", "gemini"], 'Unknown provider "gemini". Use anthropic or openai.'],
     [["dance"], 'Unknown command "dance".'],
+    [["ui", "--stt-model", "base.en"], "--stt-model needs --stt-url."],
+    [["ui", "--tts-voice", "af_heart"], "--tts-model and --tts-voice need --tts-url."],
   ])("rejects %j", (argv, message) => {
     expect(unwrapErr(parseCommand(argv))).toBe(message);
   });

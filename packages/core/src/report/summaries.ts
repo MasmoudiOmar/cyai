@@ -1,6 +1,7 @@
 import type { InterviewSummary, SessionRecord, SessionSummary } from "@cyai/spec";
 
 import type { TemplateCatalog } from "../catalog/catalog.js";
+import { interviewClock } from "../interview/clock.js";
 import { isIn } from "../session/guards.js";
 import { formatScore } from "./debrief.js";
 
@@ -18,9 +19,7 @@ export function summarizeInterviews(catalog: TemplateCatalog): readonly Intervie
             format: profile.format,
             totalMinutes: profile.timing.totalMinutes,
             maxQuestions: profile.turnPolicy.maxQuestions,
-            prepSeconds: profile.timing.prepSeconds,
-            softSeconds: profile.timing.answer.softSeconds,
-            hardSeconds: profile.timing.answer.hardSeconds,
+            ...interviewClock(profile),
           },
         ];
   });

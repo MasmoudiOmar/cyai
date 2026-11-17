@@ -1,6 +1,6 @@
 import { parseArgs } from "node:util";
 
-import { providerOf, type ModelSettings } from "@cyai/llm";
+import { providerOf, type ModelSettings, type SpeechSettings } from "@cyai/llm";
 import { errorMessage } from "@cyai/node";
 import { DEFAULT_PORT } from "@cyai/server";
 import { err, ok, type Result } from "@cyai/spec";
@@ -18,6 +18,7 @@ export interface UiCommand {
   readonly port: number;
   readonly open: boolean;
   readonly model: ModelSettings;
+  readonly speech: SpeechSettings;
 }
 
 export type Command =
@@ -51,9 +52,17 @@ UI options:
   --port <number>              Port to listen on (default: ${String(DEFAULT_PORT)})
   --no-open                    Do not open a browser window
 
+Spoken interviews (ui). Without these the browser's own speech recognition and voices are used:
+  --stt-url <url>              OpenAI-compatible speech-to-text base URL (Whisper), e.g. http://localhost:8000/v1
+  --stt-model <id>             Transcription model (default: whisper-1)
+  --tts-url <url>              OpenAI-compatible text-to-speech base URL, e.g. http://localhost:8880/v1
+  --tts-model <id>             Speech model (default: tts-1)
+  --tts-voice <name>           Interviewer voice (default: alloy)
+
 Environment:
   ANTHROPIC_API_KEY            Credentials for --provider anthropic (or run \`ant auth login\`)
-  OPENAI_API_KEY               Optional bearer token for --provider openai
+  OPENAI_API_KEY               Optional bearer token for --provider openai and speech servers
+  CYAI_SPEECH_API_KEY          Bearer token for speech servers, if different
   CYAI_HOME                    Where sessions are stored (default: ~/.cyai)
   CYAI_TEMPLATES               Extra template folders, separated like PATH
 
@@ -68,6 +77,11 @@ const OPTIONS = {
   model: { type: "string" },
   "base-url": { type: "string" },
   port: { type: "string" },
+  "stt-url": { type: "string" },
+  "stt-model": { type: "string" },
+  "tts-url": { type: "string" },
+  "tts-model": { type: "string" },
+  "tts-voice": { type: "string" },
   "no-open": { type: "boolean" },
   help: { type: "boolean", short: "h" },
   version: { type: "boolean", short: "v" },
@@ -80,6 +94,11 @@ interface Values {
   readonly model?: string;
   readonly "base-url"?: string;
   readonly port?: string;
+  readonly "stt-url"?: string;
+  readonly "stt-model"?: string;
+  readonly "tts-url"?: string;
+  readonly "tts-model"?: string;
+  readonly "tts-voice"?: string;
   readonly "no-open"?: boolean;
 }
 
@@ -94,6 +113,34 @@ function modelSettings(values: Values): Result<ModelSettings, string> {
     provider: provider.value,
     ...(values.model === undefined ? {} : { model: values.model }),
     ...(values["base-url"] === undefined ? {} : { baseUrl: values["base-url"] }),
+  });
+}
+
+/** `{ [key]: value }` when the option was given, `{}` otherwise. */
+function option<K extends string>(key: K, value: string | undefined): Readonly<Partial<Record<K, string>>> {
+  const entry: Partial<Record<K, string>> = {};
+  if (value !== undefined) {
+    entry[key] = value;
+  }
+  return entry;
+}
+
+function speechSettings(values: Values): Result<SpeechSettings, string> {
+  const sttUrl = values["stt-url"];
+  const ttsUrl = values["tts-url"];
+  if (sttUrl === undefined && values["stt-model"] !== undefined) {
+    return err("--stt-model needs --stt-url.");
+  }
+  if (ttsUrl === undefined && (values["tts-model"] !== undefined || values["tts-voice"] !== undefined)) {
+    return err("--tts-model and --tts-voice need --tts-url.");
+  }
+  return ok({
+    ...(sttUrl === undefined ? {} : { transcription: { baseUrl: sttUrl, ...option("model", values["stt-model"]) } }),
+    ...(ttsUrl === undefined
+      ? {}
+      : {
+          voice: { baseUrl: ttsUrl, ...option("model", values["tts-model"]), ...option("voice", values["tts-voice"]) },
+        }),
   });
 }
 
@@ -128,7 +175,13 @@ function uiCommand(values: Values): Result<Command, string> {
     return model;
   }
   const port = portOf(values.port);
-  return port.ok ? ok({ kind: "ui", port: port.value, open: values["no-open"] !== true, model: model.value }) : port;
+  if (!port.ok) {
+    return port;
+  }
+  const speech = speechSettings(values);
+  return speech.ok
+    ? ok({ kind: "ui", port: port.value, open: values["no-open"] !== true, model: model.value, speech: speech.value })
+    : speech;
 }
 
 function parse(argv: readonly string[]): Result<{ readonly values: Values & { readonly help?: boolean; readonly version?: boolean }; readonly positionals: readonly string[] }, string> {

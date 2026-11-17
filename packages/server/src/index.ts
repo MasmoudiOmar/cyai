@@ -1,10 +1,20 @@
-export { ABANDON_REASON, createApi, statusFor, type ApiRequest, type ApiResponse } from "./api.js";
+export {
+  ABANDON_REASON,
+  createApi,
+  NO_SPEAKER,
+  NO_TRANSCRIBER,
+  statusFor,
+  type ApiRequest,
+  type ApiResponse,
+} from "./api.js";
 export {
   boundPort,
   createRequestHandler,
   DEFAULT_HOST,
   DEFAULT_PORT,
   isLocalHost,
+  AUDIO_TYPES,
+  MAX_AUDIO_BYTES,
   MAX_BODY_BYTES,
   requestTarget,
   serverUrl,

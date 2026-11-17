@@ -12,6 +12,9 @@ export type PracticeOutcome = "completed" | "abandoned";
 
 export const QUIT_REASON = "Quit from the terminal.";
 
+export const SPOKEN_IN_TERMINAL =
+  "This interview is spoken. Here you type your answers; run `cyai ui` to answer out loud and get feedback on your delivery.";
+
 function formatQuestion(view: QuestionView): string {
   const followUp = view.followUp ? " (follow-up)" : "";
   const prep = view.prepSeconds > 0 ? `${String(view.prepSeconds)}s to prepare, then ` : "";
@@ -36,6 +39,9 @@ export async function practice(deps: PracticeDeps, input: StartPractice): Promis
     const current = view.value;
     if (first) {
       terminal.write(`Practice interview: ${current.role}\n`);
+      if (current.kind === "question" && current.turnTaking.answer === "spoken") {
+        terminal.write(`${SPOKEN_IN_TERMINAL}\n`);
+      }
       first = false;
     }
     switch (current.kind) {

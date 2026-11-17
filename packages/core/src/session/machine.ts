@@ -2,6 +2,7 @@ import {
   err,
   ok,
   type AskedQuestion,
+  type DeliveryMetrics,
   type IsoDateTime,
   type Result,
   type Scorecard,
@@ -67,6 +68,7 @@ export function answerQuestion(
   session: SessionIn<"awaiting_answer">,
   text: string,
   at: IsoDateTime,
+  delivery?: DeliveryMetrics,
 ): Step<"awaiting_evaluation"> {
   return stamped(session, at, () => {
     const duration = elapsedMs(session.pending.askedAt, at);
@@ -76,7 +78,7 @@ export function answerQuestion(
       answered: {
         index: session.turns.length,
         question: session.pending,
-        answer: { text, answeredAt: at },
+        answer: { text, answeredAt: at, ...(delivery === undefined ? {} : { delivery }) },
         elapsedMs: duration,
         overtime: classifyOvertime(duration, session.answerLimits),
       },

@@ -1,8 +1,8 @@
 id: ai-trainer-generalist
 version: 1
 role: AI Trainer / Data Annotation Specialist
-profileId: live-adaptive-generic
-rubricId: behavioral-star
+profileId: voice-conversational-generic
+rubricId: spoken-screen
 competencies: [guideline-following, written-reasoning, attention-to-detail, domain-expertise]
 questionBank:
   - kind: fixed

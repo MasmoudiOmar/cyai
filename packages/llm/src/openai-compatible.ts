@@ -1,18 +1,15 @@
 import type { ModelError, TextModel } from "@cyai/core";
-import { errorMessage } from "@cyai/node";
-import { describeIssues, err, ok, type Result } from "@cyai/spec";
+import { err, ok, type Result } from "@cyai/spec";
 import { z } from "zod";
 
-import { failureForStatus, modelError } from "./failures.js";
+import { modelError, unexpectedBody } from "./failures.js";
+import { postTo, readBody, type EndpointOptions } from "./http.js";
 
 /** Ollama's OpenAI-compatible endpoint. */
 export const DEFAULT_OPENAI_COMPATIBLE_BASE_URL = "http://localhost:11434/v1";
 
-export interface OpenAICompatibleModelOptions {
+export interface OpenAICompatibleModelOptions extends Partial<EndpointOptions> {
   readonly model: string;
-  readonly baseUrl?: string;
-  readonly apiKey?: string;
-  readonly fetch?: typeof globalThis.fetch;
 }
 
 const choiceSchema = z.object({
@@ -33,7 +30,7 @@ const chunkSchema = z.object({
 });
 
 function unexpected(error: z.ZodError): ModelError {
-  return modelError("failed", `Unexpected response: ${describeIssues(error)}`);
+  return unexpectedBody("response", error);
 }
 
 function parseJson(text: string): Result<unknown, ModelError> {
@@ -100,45 +97,32 @@ export function completionText(body: unknown): Result<string, ModelError> {
 
 /** Any server speaking the OpenAI chat-completions protocol, with JSON-schema structured output. */
 export function createOpenAICompatibleModel(options: OpenAICompatibleModelOptions): TextModel {
-  const fetchImpl = options.fetch ?? globalThis.fetch;
-  const url = `${(options.baseUrl ?? DEFAULT_OPENAI_COMPATIBLE_BASE_URL).replace(/\/+$/, "")}/chat/completions`;
-  const headers: Record<string, string> = { "content-type": "application/json" };
-  if (options.apiKey !== undefined) {
-    headers["authorization"] = `Bearer ${options.apiKey}`;
-  }
+  const endpoint: EndpointOptions = { ...options, baseUrl: options.baseUrl ?? DEFAULT_OPENAI_COMPATIBLE_BASE_URL };
   return {
     generate: async (request): Promise<Result<string, ModelError>> => {
-      let response: Response;
-      try {
-        response = await fetchImpl(url, {
-          method: "POST",
-          headers,
-          body: JSON.stringify({
-            model: options.model,
-            stream: true,
-            messages: [
-              { role: "system", content: request.system },
-              { role: "user", content: request.user },
-            ],
-            response_format: {
-              type: "json_schema",
-              json_schema: { name: request.response.name, schema: request.response.schema, strict: true },
-            },
-          }),
-        });
-      } catch (error) {
-        return err(modelError("unavailable", errorMessage(error)));
-      }
+      const response = await postTo(endpoint, "/chat/completions", {
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          model: options.model,
+          stream: true,
+          messages: [
+            { role: "system", content: request.system },
+            { role: "user", content: request.user },
+          ],
+          response_format: {
+            type: "json_schema",
+            json_schema: { name: request.response.name, schema: request.response.schema, strict: true },
+          },
+        }),
+      });
       if (!response.ok) {
-        return err(modelError(failureForStatus(response.status), `${String(response.status)} ${await response.text()}`));
+        return response;
       }
-      let text: string;
-      try {
-        text = await response.text();
-      } catch (error) {
-        return err(modelError("unavailable", errorMessage(error)));
+      const text = await readBody(() => response.value.text());
+      if (!text.ok) {
+        return text;
       }
-      const body = collectCompletion(text);
+      const body = collectCompletion(text.value);
       return body.ok ? completionText(body.value) : body;
     },
   };

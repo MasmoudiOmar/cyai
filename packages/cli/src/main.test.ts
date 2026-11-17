@@ -141,7 +141,17 @@ describe("runCli", () => {
     expect(ui.terminal.output()).toBe(`cyai is running at ${URL}\nPress Ctrl+C to stop.\n`);
     expect(served[0]?.staticDir).toBe("/web");
     const info = await served[0]?.api({ method: "GET", path: "/info", body: undefined });
-    expect(info).toEqual({ status: 200, body: { version: CYAI_VERSION, model: "claude-opus-5-5" } });
+    expect(info).toEqual({
+      status: 200,
+      body: { version: CYAI_VERSION, model: "claude-opus-5-5", voice: { transcription: "browser", voice: "browser" } },
+    });
+  });
+
+  it("serves spoken interviews through the configured speech servers", async () => {
+    const served: WebServerOptions[] = [];
+    await run(["ui", "--stt-url", "http://localhost:8000/v1", "--tts-url", "http://localhost:8880/v1"], fakeWeb(true, served));
+    const info = await served[0]?.api({ method: "GET", path: "/info", body: undefined });
+    expect(info).toMatchObject({ body: { voice: { transcription: "whisper", voice: "endpoint" } } });
   });
 
   it("prints the address when no browser opens, and can skip opening one", async () => {

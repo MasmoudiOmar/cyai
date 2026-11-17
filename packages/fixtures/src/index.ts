@@ -6,6 +6,7 @@ import type {
   Rubric,
   Scorecard,
   SessionIn,
+  SpeechMeasurement,
   TurnEvaluation,
 } from "@cyai/spec";
 
@@ -31,6 +32,7 @@ export const genericProfile: InterviewerProfile = {
     prepSeconds: 0,
     answer: { softSeconds: 120, hardSeconds: 180 },
   },
+  turnTaking: { answer: "typed", endOfTurn: "submit" },
   turnPolicy: {
     maxQuestions: 2,
     maxFollowUpsPerQuestion: 1,
@@ -38,6 +40,22 @@ export const genericProfile: InterviewerProfile = {
   },
   persona: { tone: "neutral-friendly", reactsEmotionally: false },
   contextSources: ["resume", "job_description"],
+};
+
+/** A conversational voice screener: answers are spoken and end after a long pause. */
+export const spokenProfile: InterviewerProfile = {
+  ...genericProfile,
+  id: "voice-conversational-generic",
+  modalities: ["voice"],
+  turnTaking: { answer: "spoken", endOfTurn: "silence", endSilenceSeconds: 4, nudgeAfterSeconds: 10 },
+};
+
+/** Microphone timing for a one-minute spoken answer. */
+export const minuteOfSpeech: SpeechMeasurement = {
+  speechMs: 60_000,
+  latencyMs: 1_200,
+  pauses: [{ atMs: 5_000, ms: 2_500 }],
+  transcriber: "whisper",
 };
 
 export const starRubric: Rubric = {

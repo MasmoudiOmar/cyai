@@ -4,13 +4,16 @@ version: 1
 name: Adaptive AI interviewer (generic)
 description: Live conversational screener that builds questions from your resume and the job description and drills into vague answers.
 format: live
-modalities: [voice, text]
+modalities: [text]
 timing:
   totalMinutes: 25
   prepSeconds: 0
   answer:
     softSeconds: 120
     hardSeconds: 180
+turnTaking:
+  answer: typed
+  endOfTurn: submit
 turnPolicy:
   maxQuestions: 6
   maxFollowUpsPerQuestion: 2

@@ -11,6 +11,9 @@ timing:
   answer:
     softSeconds: 60
     hardSeconds: 120
+turnTaking:
+  answer: typed
+  endOfTurn: submit
 turnPolicy:
   maxQuestions: 5
   maxFollowUpsPerQuestion: 1

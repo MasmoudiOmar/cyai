@@ -6,6 +6,8 @@ export {
   type TemplateDocuments,
   type TemplateKind,
 } from "./catalog/catalog.js";
+export { analyzeDelivery } from "./delivery/analyze.js";
+export { interviewClock, type InterviewClock } from "./interview/clock.js";
 export { createContext, type InterviewContext } from "./interview/context.js";
 export {
   advance,
@@ -32,14 +34,18 @@ export { questionSlots, type QuestionSlot } from "./interview/question-plan.js";
 export { answerRun, resumeRun, startRun, type RunnerDeps, type RunnerError } from "./interview/runner.js";
 export { decideNextStep, followUpCount, type NextStep } from "./policy/next-step.js";
 export type {
+  AudioClip,
   Clock,
   IdGenerator,
   ModelError,
   ModelFailure,
   ModelRequest,
   SessionStore,
+  Speaker,
+  SpeechServices,
   StoreError,
   TextModel,
+  Transcriber,
 } from "./ports/index.js";
 export { scoreSession, type ScoringError } from "./scoring/score-session.js";
 export { validateEvaluation, type EvaluationError } from "./scoring/validate-evaluation.js";

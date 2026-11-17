@@ -29,6 +29,7 @@ describe("built-in templates", () => {
     const catalog = unwrap(await loadCatalog());
     expect([...catalog.interviews.keys()].sort()).toEqual([
       "ai-trainer-generalist",
+      "expert-voice-screen",
       "graduate-program-behavioral",
       "software-engineer-screen",
     ]);

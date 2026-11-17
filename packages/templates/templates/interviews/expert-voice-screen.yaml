@@ -1,0 +1,23 @@
+# The shape of a Mercor/micro1 expert screen: background walkthrough, drill-downs from the
+# resume and the job, then a situational question. Everything is spoken.
+id: expert-voice-screen
+version: 1
+role: Domain Expert (voice screen)
+profileId: voice-conversational-generic
+rubricId: spoken-screen
+competencies: [domain-expertise, hands-on-experience, problem-solving, communication]
+questionBank:
+  - kind: fixed
+    id: background-walkthrough
+    text: To start, could you walk me through your background and the experience most relevant to this role?
+    competency: hands-on-experience
+  - kind: generated
+    source: resume
+    count: 2
+  - kind: generated
+    source: job_description
+    count: 2
+  - kind: fixed
+    id: ambiguous-situation
+    text: Tell me about a time the instructions for a task were unclear. What did you do?
+    competency: problem-solving

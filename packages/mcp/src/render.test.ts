@@ -18,6 +18,7 @@ const question: Extract<Reply, { kind: "question" }> = {
   prepSeconds: 30,
   softSeconds: 90,
   hardSeconds: 120,
+  turnTaking: { answer: "typed", endOfTurn: "submit" },
 };
 
 describe("renderReply", () => {
@@ -78,7 +79,7 @@ describe("listings", () => {
     expect(renderInterviews([])).toBe("No interviews are installed.");
     expect(
       renderInterviews([
-        { id: "ai-trainer-generalist", role: "AI Trainer", profile: "Adaptive", format: "live", totalMinutes: 25, maxQuestions: 6, prepSeconds: 0, softSeconds: 120, hardSeconds: 180 },
+        { id: "ai-trainer-generalist", role: "AI Trainer", profile: "Adaptive", format: "live", totalMinutes: 25, maxQuestions: 6, prepSeconds: 0, softSeconds: 120, hardSeconds: 180, turnTaking: { answer: "typed", endOfTurn: "submit" } },
       ]),
     ).toContain("| ai-trainer-generalist | AI Trainer | Adaptive (live) | 25 min | up to 6 |");
     expect(renderSessions([])).toBe("No practice sessions yet.");

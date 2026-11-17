@@ -1,4 +1,5 @@
-import { evaluation, genericProfile } from "@cyai/fixtures";
+import { evaluation, genericProfile, spokenProfile } from "@cyai/fixtures";
+import type { DeliveryMetrics } from "@cyai/spec";
 import { describe, expect, it } from "vitest";
 
 import { drive, events, expectStatus, turn } from "../test-support/drive.js";
@@ -32,6 +33,14 @@ describe("questionRequest", () => {
     expect(request.user).toContain("grounded in the job description");
   });
 
+  it("asks for speakable questions in spoken interviews", () => {
+    const spoken = questionRequest(fixtureContext({ profile: spokenProfile }), [], { kind: "generated", source: "resume" });
+    expect(spoken.system).toContain("read aloud by a voice interviewer");
+    expect(questionRequest(fixtureContext(), [], { kind: "generated", source: "resume" }).system).not.toContain(
+      "read aloud",
+    );
+  });
+
   it("asks a follow-up that cites the transcript and the flagged reasons", () => {
     const turns = expectStatus(drive(events.start(0), ...turn(1, evaluation(2))), "awaiting_question").turns;
     const request = questionRequest(fixtureContext(), turns, { kind: "follow_up", of: 0, triggers: ["vague"] });
@@ -48,6 +57,25 @@ describe("evaluationRequest", () => {
     expect(request.user).toContain("Answered in 60s (soft limit 120s, hard limit 180s, overtime: none).");
     expect(request.system).toContain("Allowed: vague (");
     expect(request.response.name).toBe("answer_evaluation");
+  });
+
+  it("adds delivery measurements for spoken answers", () => {
+    const delivery: DeliveryMetrics = {
+      words: 120,
+      wordsPerMinute: 140,
+      fillers: [{ word: "um", count: 4 }],
+      fillersPerMinute: 2,
+      repetitions: 1,
+      pauseCount: 2,
+      longestPauseMs: 3_200,
+      latencyMs: 900,
+      speakingShare: 0.9,
+      transcriber: "whisper",
+    };
+    const request = evaluationRequest(fixtureContext(), { ...answered, answer: { ...answered.answer, delivery } });
+    expect(request.system).toContain("The answer was spoken and transcribed");
+    expect(request.user).toContain("<delivery>\nPace: 140 words per minute over 120 words.");
+    expect(evaluationRequest(fixtureContext(), answered).user).not.toContain("<delivery>");
   });
 
   it("forbids triggers when the profile follows up on none", () => {

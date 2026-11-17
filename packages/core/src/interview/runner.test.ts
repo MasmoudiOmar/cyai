@@ -1,4 +1,4 @@
-import { at, evaluation, genericProfile } from "@cyai/fixtures";
+import { aiTrainerInterview, at, evaluation, genericProfile, minuteOfSpeech, spokenProfile } from "@cyai/fixtures";
 import type { SessionIn } from "@cyai/spec";
 import { describe, expect, it } from "vitest";
 
@@ -66,6 +66,23 @@ describe("standalone runner", () => {
       "interview_question",
       "answer_evaluation",
     ]);
+  });
+
+  it("measures delivery for spoken answers only", async () => {
+    const spoken = fixtureContext({
+      profile: spokenProfile,
+      interview: { ...aiTrainerInterview, profileId: spokenProfile.id },
+    });
+    const replies = [evaluationJson(evaluation(4)), questionJson("And then?")];
+    const spokenRunner = runnerWith(replies);
+    const asked = questionOf(unwrap(await startRun(spoken, spokenRunner)));
+    const next = questionOf(unwrap(await answerRun(spoken, spokenRunner, asked, "Um, I escalated.", minuteOfSpeech)));
+    expect(next.turns[0]?.answer.delivery).toMatchObject({ words: 3, fillers: [{ word: "um", count: 1 }] });
+    expect(spokenRunner.model.requests[0]?.user).toContain("<delivery>");
+
+    const typedRunner = runnerWith(replies);
+    const typed = questionOf(unwrap(await answerRun(context, typedRunner, await firstQuestion(typedRunner), "Um.", minuteOfSpeech)));
+    expect(typed.turns[0]?.answer.delivery).toBeUndefined();
   });
 
   it.each([

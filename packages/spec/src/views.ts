@@ -1,7 +1,8 @@
 import { z } from "zod";
 
+import { speechMeasurementSchema, transcriberSchema } from "./delivery.js";
 import { averageScoreSchema, idSchema, isoDateTimeSchema, textSchema } from "./primitives.js";
-import { interviewFormatSchema } from "./profile.js";
+import { interviewFormatSchema, turnTakingSchema } from "./profile.js";
 import { scorecardSchema } from "./scorecard.js";
 import { evaluatedTurnSchema, sessionIdSchema, type SessionStatus } from "./session.js";
 
@@ -23,11 +24,12 @@ const SESSION_STATUSES = {
 
 export const sessionStatusSchema = z.enum(SESSION_STATUSES);
 
-/** The interviewer's clock, shown before and during an interview. */
+/** The interviewer's clock and how turns end, shown before and during an interview. */
 const timingShape = {
   prepSeconds: z.int().nonnegative(),
   softSeconds: z.int().positive(),
   hardSeconds: z.int().positive(),
+  turnTaking: turnTakingSchema,
 };
 
 export const interviewSummarySchema = z.strictObject({
@@ -107,11 +109,31 @@ export const startPracticeSchema = z.strictObject({
 });
 export type StartPractice = z.infer<typeof startPracticeSchema>;
 
-export const answerSchema = z.strictObject({ answer: z.string().max(CANDIDATE_TEXT_MAX) });
+export const answerSchema = z.strictObject({
+  answer: z.string().max(CANDIDATE_TEXT_MAX),
+  /** Microphone timing, sent only for spoken answers. */
+  speech: speechMeasurementSchema.optional(),
+});
 export type AnswerInput = z.infer<typeof answerSchema>;
 
 export const errorBodySchema = z.strictObject({ error: z.string() });
 export type ErrorBody = z.infer<typeof errorBodySchema>;
 
-export const appInfoSchema = z.strictObject({ version: z.string(), model: z.string() });
+/** Which speech services the server offers; the browser stands in for any that is missing. */
+export const voiceInfoSchema = z.strictObject({
+  transcription: transcriberSchema,
+  voice: z.enum(["endpoint", "browser"]),
+});
+export type VoiceInfo = z.infer<typeof voiceInfoSchema>;
+
+export const appInfoSchema = z.strictObject({ version: z.string(), model: z.string(), voice: voiceInfoSchema });
 export type AppInfo = z.infer<typeof appInfoSchema>;
+
+/** Longest interviewer line sent for synthesis. */
+export const SPOKEN_TEXT_MAX = 2_000;
+
+export const speakSchema = z.strictObject({ text: z.string().trim().min(1).max(SPOKEN_TEXT_MAX) });
+export type SpeakInput = z.infer<typeof speakSchema>;
+
+export const transcriptionSchema = z.strictObject({ text: z.string() });
+export type Transcription = z.infer<typeof transcriptionSchema>;

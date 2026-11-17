@@ -26,6 +26,24 @@ export const answerLimitsSchema = z
   });
 export type AnswerLimits = z.infer<typeof answerLimitsSchema>;
 
+/**
+ * How a turn is taken. Typed answers are submitted. Spoken answers end either after a long
+ * silence (conversational voice screeners) or when the recording window closes (one-way screens).
+ */
+export const turnTakingSchema = z.discriminatedUnion("endOfTurn", [
+  z.strictObject({ answer: z.literal("typed"), endOfTurn: z.literal("submit") }),
+  z.strictObject({
+    answer: z.literal("spoken"),
+    endOfTurn: z.literal("silence"),
+    /** Silence after the candidate has spoken that ends the answer. */
+    endSilenceSeconds: z.number().positive(),
+    /** Silence before the candidate says anything that makes the interviewer cut in. */
+    nudgeAfterSeconds: z.number().positive(),
+  }),
+  z.strictObject({ answer: z.literal("spoken"), endOfTurn: z.literal("timer") }),
+]);
+export type TurnTaking = z.infer<typeof turnTakingSchema>;
+
 /** How an interviewer behaves: format, timing, follow-up depth and persona. */
 export const interviewerProfileSchema = z.strictObject({
   id: idSchema,
@@ -39,6 +57,7 @@ export const interviewerProfileSchema = z.strictObject({
     prepSeconds: z.int().nonnegative(),
     answer: answerLimitsSchema,
   }),
+  turnTaking: turnTakingSchema,
   turnPolicy: z.strictObject({
     maxQuestions: z.int().positive(),
     maxFollowUpsPerQuestion: z.int().nonnegative(),

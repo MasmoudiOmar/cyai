@@ -9,6 +9,7 @@ import {
   type TurnEvaluation,
 } from "@cyai/spec";
 
+import { describeDelivery } from "../delivery/describe.js";
 import type { ModelRequest } from "../ports/index.js";
 import type { InterviewContext } from "./context.js";
 
@@ -67,6 +68,13 @@ function taskInstruction(task: QuestionTask): string {
   return `The answer to question ${String(task.of + 1)} was flagged: ${reasons}. Write one follow-up question that probes that answer.`;
 }
 
+/** How a voice interviewer phrases what it says aloud. */
+const SPOKEN_QUESTION = [
+  "Your words are read aloud by a voice interviewer and the candidate answers out loud.",
+  "Write it as natural speech: at most two short sentences, no lists, markdown, brackets or abbreviations that read badly aloud.",
+  "When there is a previous answer, you may open with a brief neutral acknowledgement such as \"Thanks.\" or \"Got it.\" before the question.",
+].join(" ");
+
 /** Prompt for the next interviewer question. */
 export function questionRequest(
   { interview, profile, candidate }: InterviewContext,
@@ -80,6 +88,7 @@ export function questionRequest(
       `Tone: ${profile.persona.tone}.`,
       ...(profile.persona.reactsEmotionally ? [] : ["Stay neutral: do not praise, reassure or react to answers."]),
       `Competencies assessed: ${interview.competencies.join(", ")}.`,
+      ...(profile.turnTaking.answer === "spoken" ? [SPOKEN_QUESTION] : []),
       "Write exactly one question. Never answer it, give feedback, or reveal scores.",
       JSON_ONLY,
     ],
@@ -105,9 +114,16 @@ function triggerGuidance(triggers: readonly FollowUpTrigger[]): string {
         .join("; ")}.`;
 }
 
+const SPOKEN_EVALUATION = [
+  "The answer was spoken and transcribed, so fillers and false starts appear in it.",
+  "Judge content criteria on substance, not on transcription noise.",
+  "Judge delivery criteria (fluency, pace, concision) using the <delivery> measurements.",
+].join(" ");
+
 /** Prompt for a rubric evaluation of the answered turn. */
 export function evaluationRequest(context: InterviewContext, answered: AnsweredTurn): ModelRequest {
   const { interview, profile, rubric } = context;
+  const { delivery } = answered.answer;
   const { softSeconds, hardSeconds } = profile.timing.answer;
   const criteria = rubric.criteria.map((criterion) =>
     [
@@ -121,6 +137,7 @@ export function evaluationRequest(context: InterviewContext, answered: AnsweredT
       `You are a strict, calibrated evaluator of interview answers for the role "${interview.role}".`,
       "Score every rubric criterion exactly once, from 1 (poor) to 5 (excellent), using the level descriptors.",
       triggerGuidance(profile.turnPolicy.followUpTriggers),
+      ...(delivery === undefined ? [] : [SPOKEN_EVALUATION]),
       "Write a rationale of 2-4 specific sentences addressed to the candidate.",
       JSON_ONLY,
     ],
@@ -128,6 +145,7 @@ export function evaluationRequest(context: InterviewContext, answered: AnsweredT
       ...section("rubric", criteria.join("\n")),
       ...section("question", questionLabel(answered)),
       ...section("answer", answered.answer.text),
+      ...section("delivery", delivery === undefined ? undefined : describeDelivery(delivery)),
       `Answered in ${String(Math.round(answered.elapsedMs / 1000))}s (soft limit ${String(softSeconds)}s, hard limit ${String(hardSeconds)}s, overtime: ${answered.overtime}).`,
     ],
   );

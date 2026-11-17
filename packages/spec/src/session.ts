@@ -7,6 +7,7 @@ import {
   scoreSchema,
   textSchema,
 } from "./primitives.js";
+import { deliveryMetricsSchema } from "./delivery.js";
 import { answerLimitsSchema } from "./profile.js";
 import { scorecardSchema } from "./scorecard.js";
 
@@ -38,7 +39,12 @@ export type TurnEvaluation = z.infer<typeof turnEvaluationSchema>;
 const answeredTurnShape = {
   index: z.int().nonnegative(),
   question: askedQuestionSchema,
-  answer: z.strictObject({ text: z.string(), answeredAt: isoDateTimeSchema }),
+  answer: z.strictObject({
+    text: z.string(),
+    answeredAt: isoDateTimeSchema,
+    /** Present when the answer was spoken. */
+    delivery: deliveryMetricsSchema.optional(),
+  }),
   elapsedMs: z.int().nonnegative(),
   overtime: overtimeSchema,
 };
