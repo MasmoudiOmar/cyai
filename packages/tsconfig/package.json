@@ -1,0 +1,12 @@
+{
+  "name": "@cyai/tsconfig",
+  "version": "0.0.0",
+  "description": "Shared strict TypeScript configuration for cyai packages.",
+  "license": "SEE LICENSE IN ../../LICENSE",
+  "files": [
+    "base.json"
+  ],
+  "exports": {
+    "./base.json": "./base.json"
+  }
+}

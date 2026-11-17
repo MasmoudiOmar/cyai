@@ -1,0 +1,7 @@
+{
+  "extends": "@cyai/tsconfig/base.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": ["src"]
+}

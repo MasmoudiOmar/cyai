@@ -1,0 +1,25 @@
+{
+  "name": "@cyai/core",
+  "version": "0.0.0",
+  "description": "Pure, I/O-free interview engine: session state machine, turn policy and rubric scoring.",
+  "license": "SEE LICENSE IN ../../LICENSE",
+  "type": "module",
+  "sideEffects": false,
+  "files": ["dist"],
+  "exports": {
+    ".": {
+      "@cyai/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@cyai/spec": "workspace:*"
+  },
+  "devDependencies": {
+    "@cyai/fixtures": "workspace:*"
+  }
+}

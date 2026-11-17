@@ -1,0 +1,21 @@
+{
+  "name": "@cyai/eslint-config",
+  "version": "0.0.0",
+  "description": "Shared strict ESLint configuration for cyai packages.",
+  "license": "SEE LICENSE IN ../../LICENSE",
+  "type": "module",
+  "files": [
+    "index.js"
+  ],
+  "exports": {
+    ".": "./index.js"
+  },
+  "dependencies": {
+    "@eslint/js": "10.0.1",
+    "typescript-eslint": "8.73.0"
+  },
+  "peerDependencies": {
+    "eslint": "^10.0.0",
+    "typescript": ">=6.0.0 <6.1.0"
+  }
+}

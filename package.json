@@ -1,0 +1,29 @@
+{
+  "name": "cyai-monorepo",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.11.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc -b tsconfig.build.json",
+    "typecheck": "pnpm -r --parallel run typecheck && tsc -p tsconfig.json --noEmit",
+    "lint": "eslint . --max-warnings 0",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "dup": "jscpd",
+    "check": "pnpm typecheck && pnpm lint && pnpm dup && pnpm test:coverage && pnpm build",
+    "clean": "rm -rf packages/*/dist coverage"
+  },
+  "devDependencies": {
+    "@cyai/eslint-config": "workspace:*",
+    "@cyai/tsconfig": "workspace:*",
+    "@types/node": "22.20.5",
+    "@vitest/coverage-v8": "5.1.0",
+    "eslint": "10.15.0",
+    "jscpd": "5.4.3",
+    "typescript": "6.0.3",
+    "vitest": "5.1.0"
+  }
+}
