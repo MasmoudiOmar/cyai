@@ -61,6 +61,7 @@ describe("practice service", () => {
     expect(unwrap(await service.start(START))).toEqual({
       kind: "question",
       sessionId: SESSION_ID,
+      interviewId: "ai-trainer-generalist",
       role: "AI Trainer",
       number: 1,
       maxQuestions: 2,
@@ -127,6 +128,7 @@ describe("practice service", () => {
       expect(unwrap(await service.resume(SESSION_ID))).toEqual({
         kind: "abandoned",
         sessionId: SESSION_ID,
+        interviewId: "ai-trainer-generalist",
         role: "AI Trainer",
         reason: "Had to leave",
       });

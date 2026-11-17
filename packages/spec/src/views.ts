@@ -23,6 +23,13 @@ const SESSION_STATUSES = {
 
 export const sessionStatusSchema = z.enum(SESSION_STATUSES);
 
+/** The interviewer's clock, shown before and during an interview. */
+const timingShape = {
+  prepSeconds: z.int().nonnegative(),
+  softSeconds: z.int().positive(),
+  hardSeconds: z.int().positive(),
+};
+
 export const interviewSummarySchema = z.strictObject({
   id: idSchema,
   role: textSchema,
@@ -30,6 +37,7 @@ export const interviewSummarySchema = z.strictObject({
   format: interviewFormatSchema,
   totalMinutes: z.number().positive(),
   maxQuestions: z.int().positive(),
+  ...timingShape,
 });
 export type InterviewSummary = z.infer<typeof interviewSummarySchema>;
 
@@ -45,14 +53,13 @@ export type SessionSummary = z.infer<typeof sessionSummarySchema>;
 export const questionViewSchema = z.strictObject({
   kind: z.literal("question"),
   sessionId: sessionIdSchema,
+  interviewId: idSchema,
   role: textSchema,
   number: z.int().positive(),
   maxQuestions: z.int().positive(),
   text: textSchema,
   followUp: z.boolean(),
-  prepSeconds: z.int().nonnegative(),
-  softSeconds: z.int().positive(),
-  hardSeconds: z.int().positive(),
+  ...timingShape,
 });
 export type QuestionView = z.infer<typeof questionViewSchema>;
 
@@ -62,6 +69,7 @@ export type CriterionLabel = z.infer<typeof criterionLabelSchema>;
 export const completedViewSchema = z.strictObject({
   kind: z.literal("completed"),
   sessionId: sessionIdSchema,
+  interviewId: idSchema,
   role: textSchema,
   scorecard: scorecardSchema,
   passThreshold: averageScoreSchema,
@@ -73,6 +81,7 @@ export type CompletedView = z.infer<typeof completedViewSchema>;
 export const abandonedViewSchema = z.strictObject({
   kind: z.literal("abandoned"),
   sessionId: sessionIdSchema,
+  interviewId: idSchema,
   role: textSchema,
   reason: textSchema,
 });

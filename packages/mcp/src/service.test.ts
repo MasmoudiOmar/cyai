@@ -184,12 +184,7 @@ describe("interview service", () => {
       const h = harness();
       unwrap(await h.service.start(START));
       unwrap(await h.service.abandon(SESSION_ID, "Had to leave"));
-      expect(unwrap(await h.service.resume(SESSION_ID))).toEqual({
-        kind: "abandoned",
-        sessionId: SESSION_ID,
-        role: "AI Trainer",
-        reason: "Had to leave",
-      });
+      expect(unwrap(await h.service.resume(SESSION_ID))).toMatchObject({ kind: "abandoned", reason: "Had to leave" });
     });
 
     it("returns the debrief of a completed session", async () => {

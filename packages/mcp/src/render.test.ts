@@ -9,6 +9,7 @@ const request = { system: "SYSTEM", user: "USER", response: { name: "interview_q
 const question: Extract<Reply, { kind: "question" }> = {
   kind: "question",
   sessionId: SESSION_ID,
+  interviewId: "ai-trainer-generalist",
   role: "AI Trainer",
   number: 2,
   maxQuestions: 5,
@@ -39,6 +40,7 @@ describe("renderReply", () => {
     const reply: Reply = {
       kind: "completed",
       sessionId: SESSION_ID,
+      interviewId: "ai-trainer-generalist",
       role: "AI Trainer",
       scorecard: { criteria: [{ criterionId: "structure", average: 4, samples: 1 }], overall: 4, passed: true, evaluatedTurns: 1 },
       passThreshold: 3.5,
@@ -49,7 +51,7 @@ describe("renderReply", () => {
   });
 
   it("confirms an abandoned session", () => {
-    expect(renderReply({ kind: "abandoned", sessionId: SESSION_ID, role: "AI Trainer", reason: "Left" })).toBe(
+    expect(renderReply({ kind: "abandoned", sessionId: SESSION_ID, interviewId: "ai-trainer-generalist", role: "AI Trainer", reason: "Left" })).toBe(
       `Interview ${SESSION_ID} has ended: Left`,
     );
   });
@@ -76,7 +78,7 @@ describe("listings", () => {
     expect(renderInterviews([])).toBe("No interviews are installed.");
     expect(
       renderInterviews([
-        { id: "ai-trainer-generalist", role: "AI Trainer", profile: "Adaptive", format: "live", totalMinutes: 25, maxQuestions: 6 },
+        { id: "ai-trainer-generalist", role: "AI Trainer", profile: "Adaptive", format: "live", totalMinutes: 25, maxQuestions: 6, prepSeconds: 0, softSeconds: 120, hardSeconds: 180 },
       ]),
     ).toContain("| ai-trainer-generalist | AI Trainer | Adaptive (live) | 25 min | up to 6 |");
     expect(renderSessions([])).toBe("No practice sessions yet.");

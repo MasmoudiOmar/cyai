@@ -8,6 +8,7 @@ export function questionView(context: InterviewContext, session: SessionIn<"awai
   return {
     kind: "question",
     sessionId: session.id,
+    interviewId: session.interviewId,
     role: context.interview.role,
     number: session.turns.length + 1,
     maxQuestions: turnPolicy.maxQuestions,
@@ -24,6 +25,7 @@ export function completedView(context: InterviewContext, session: SessionIn<"com
   return {
     kind: "completed",
     sessionId: session.id,
+    interviewId: session.interviewId,
     role: context.interview.role,
     scorecard: session.scorecard,
     passThreshold: context.rubric.passThreshold,
@@ -33,5 +35,5 @@ export function completedView(context: InterviewContext, session: SessionIn<"com
 }
 
 export function abandonedView(context: InterviewContext, session: SessionIn<"abandoned">): AbandonedView {
-  return { kind: "abandoned", sessionId: session.id, role: context.interview.role, reason: session.reason };
+  return { kind: "abandoned", sessionId: session.id, interviewId: session.interviewId, role: context.interview.role, reason: session.reason };
 }

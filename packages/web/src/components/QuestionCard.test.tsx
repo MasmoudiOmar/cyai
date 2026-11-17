@@ -29,15 +29,19 @@ function elapse(seconds: number): void {
 
 const answerBox = (): HTMLElement => screen.getByLabelText("Your answer");
 const submitButton = (): HTMLElement => screen.getByRole("button", { name: "Submit answer" });
+const clock = (): string | null => screen.getByRole("timer").textContent;
+const caption = (text: string): HTMLElement => screen.getByText(text);
 
 describe("QuestionCard", () => {
   it("shows the question and submits a typed answer", () => {
     const { onSubmit } = setup();
     expect(screen.getByRole("heading", { name: question.text })).toBeDefined();
-    expect(screen.getByText("Question 1 of up to 2")).toBeDefined();
+    expect(screen.getByText("AI Trainer · Question 1 of up to 2")).toBeDefined();
     expect(submitButton()).toHaveProperty("disabled", true);
+    fireEvent.change(answerBox(), { target: { value: "Escalated" } });
+    expect(screen.getByText(/^1 word ·/)).toBeDefined();
     fireEvent.change(answerBox(), { target: { value: "I escalated it" } });
-    expect(screen.getByText("3 words · Ctrl+Enter to submit")).toBeDefined();
+    expect(screen.getByText(/^3 words ·/)).toBeDefined();
     fireEvent.click(submitButton());
     expect(onSubmit).toHaveBeenCalledWith("I escalated it");
   });
@@ -65,10 +69,10 @@ describe("QuestionCard", () => {
     elapse(5);
     fireEvent.click(submitButton());
     elapse(200);
-    expect(screen.getByRole("timer").textContent).toBe("0:05 of 1:00 suggested");
+    expect(clock()).toBe("0:05");
     expect(onSubmit).toHaveBeenCalledOnce();
     fireEvent.click(submitButton());
-    expect(screen.getByRole("timer").textContent).toBe("0:05 of 1:00 suggested");
+    expect(clock()).toBe("0:05");
     expect(onSubmit).toHaveBeenCalledTimes(2);
   });
 
@@ -78,23 +82,31 @@ describe("QuestionCard", () => {
     expect(onStop).toHaveBeenCalledOnce();
   });
 
-  it("locks the form while the answer is evaluated", () => {
-    setup({ ...question, followUp: true }, true);
+  it("shows progress, follow-ups and the evaluating state", () => {
+    const { container } = render(<span />);
+    setup({ ...question, number: 2, followUp: true }, true);
     expect(screen.getByText("Follow-up")).toBeDefined();
     expect(answerBox()).toHaveProperty("disabled", true);
     expect(screen.getByRole("button", { name: "Evaluating…" })).toHaveProperty("disabled", true);
+    expect(screen.getByRole("status").textContent).toContain("Your interviewer is evaluating your answer");
+    expect(container.ownerDocument.querySelectorAll(".steps .done")).toHaveLength(1);
+    expect(container.ownerDocument.querySelectorAll(".steps .current")).toHaveLength(1);
   });
 
   it("counts down preparation, then the suggested time, then cuts the answer off", () => {
     const { onSubmit } = setup({ ...question, prepSeconds: 10 });
-    expect(screen.getByRole("timer").textContent).toBe("Preparation: 0:10 left");
+    expect(clock()).toBe("0:10");
+    expect(caption("Gather your thoughts. The answer clock starts next.")).toBeDefined();
     elapse(10);
-    expect(screen.getByRole("timer").textContent).toBe("0:00 of 1:00 suggested");
+    expect(clock()).toBe("0:00");
+    expect(caption("Aim for 1:00. Cut-off at 1:30.")).toBeDefined();
     fireEvent.change(answerBox(), { target: { value: "Partial" } });
     elapse(60);
-    expect(screen.getByRole("timer").textContent).toBe("Over the suggested time: 0:30 until the cut-off");
+    expect(clock()).toBe("0:30");
+    expect(caption("Over the suggested time: wrap up.")).toBeDefined();
     elapse(30);
-    expect(screen.getByRole("timer").textContent).toBe("Time is up");
+    expect(clock()).toBe("0:00");
+    expect(caption("Time is up")).toBeDefined();
     expect(onSubmit).toHaveBeenCalledExactlyOnceWith("Partial");
     elapse(5);
     expect(onSubmit).toHaveBeenCalledOnce();

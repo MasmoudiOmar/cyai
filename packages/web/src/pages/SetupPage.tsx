@@ -1,47 +1,50 @@
 import type { InterviewSummary } from "@cyai/spec";
-import { useState, type ChangeEvent, type JSX } from "react";
+import { useState, type JSX } from "react";
 
 import type { ApiClient } from "../api.js";
+import { DropField } from "../components/DropField.js";
+import { Arrow, Icon, type IconName } from "../components/Icon.js";
 import { Loading } from "../components/Loading.js";
 import { Notice } from "../components/Notice.js";
+import { FORMATS, formatSeconds } from "../format.js";
 import { hrefFor, navigate } from "../route.js";
 import { useLoad } from "../use-load.js";
 
-interface ContextFieldProps {
-  readonly id: string;
-  readonly label: string;
-  readonly hint: string;
-  readonly value: string;
-  readonly onChange: (value: string) => void;
+function timing(interview: InterviewSummary): string {
+  const answer = `aim for ${formatSeconds(interview.softSeconds)} per answer, cut off at ${formatSeconds(interview.hardSeconds)}`;
+  return interview.prepSeconds > 0 ? `${String(interview.prepSeconds)}s to prepare, then ${answer}` : `No prep time: ${answer}`;
 }
 
-/** A pasteable text area that can also be filled from a .txt or .md file. */
-function ContextField({ id, label, hint, value, onChange }: ContextFieldProps): JSX.Element {
-  const onFile = (event: ChangeEvent<HTMLInputElement>): void => {
-    const file = event.target.files?.[0];
-    if (file !== undefined) {
-      void file.text().then(onChange);
-    }
-  };
+function Brief({ interview }: { readonly interview: InterviewSummary }): JSX.Element {
+  const format = FORMATS[interview.format];
+  const expectations: readonly [IconName, string, string][] = [
+    ["clock", `${String(interview.totalMinutes)} minutes`, "The length of the real screen."],
+    ["questions", `Up to ${String(interview.maxQuestions)} questions`, "Vague answers get follow-ups, as they would live."],
+    ["hourglass", "Timed answers", timing(interview)],
+    ["spark", "Scored debrief", "Every answer is graded against the interviewer’s rubric."],
+  ];
   return (
-    <div className="field">
-      <label htmlFor={id} className="label">
-        {label} <span className="muted">(optional)</span>
-      </label>
-      <textarea
-        id={id}
-        rows={6}
-        value={value}
-        placeholder={hint}
-        onChange={(event) => {
-          onChange(event.target.value);
-        }}
-      />
-      <label className="file">
-        <span className="muted">or load a text file</span>
-        <input type="file" accept=".txt,.md,text/plain,text/markdown" aria-label={`${label} file`} onChange={onFile} />
-      </label>
-    </div>
+    <aside className="card pad brief">
+      <span className="card-top">
+        <span className={`icon-tile ${interview.format}`}>
+          <Icon name={format.icon} size={20} />
+        </span>
+        <span className="eyebrow">{format.label}</span>
+      </span>
+      <h1 className="display">{interview.role}</h1>
+      <p className="muted">{interview.profile}</p>
+      <ul className="expect">
+        {expectations.map(([icon, title, detail]) => (
+          <li key={title}>
+            <Icon name={icon} />
+            <span>
+              <strong>{title}</strong>
+              <span className="muted">{detail}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </aside>
   );
 }
 
@@ -65,42 +68,41 @@ function SetupForm({ api, interview }: { readonly api: ApiClient; readonly inter
   };
 
   return (
-    <section className="card setup">
-      <p className="eyebrow">{interview.profile}</p>
-      <h1>{interview.role}</h1>
-      <p className="facts">
-        {interview.totalMinutes} min · up to {interview.maxQuestions} questions · timed answers
-      </p>
-      <p className="muted">
-        Sharing your resume and the job description lets the interviewer ask about your experience. They stay on this computer,
-        apart from what is sent to the interviewer model.
-      </p>
-      <ContextField id="resume" label="Resume" hint="Paste your resume…" value={resume} onChange={setResume} />
-      <ContextField
-        id="job-description"
-        label="Job description"
-        hint="Paste the job posting…"
-        value={jobDescription}
-        onChange={setJobDescription}
-      />
-      {error === undefined ? null : <Notice message={error} />}
-      <div className="actions">
-        <a className="button secondary" href={hrefFor({ page: "home" })}>
-          Back
-        </a>
-        <span className="spacer" />
-        <button type="button" className="button primary" disabled={busy} onClick={start}>
-          {busy ? "Preparing your interview…" : "Start interview"}
-        </button>
+    <>
+      <a className="back" href={hrefFor({ page: "home" })}>
+        <Icon name="back" size={16} /> All interviews
+      </a>
+      <div className="setup">
+        <Brief interview={interview} />
+        <section className="card pad form">
+          <h2 className="display">Tailor it to you</h2>
+          <p className="muted">Share your resume and the job posting and the interviewer will ask about your experience.</p>
+          <DropField id="resume" label="Resume" placeholder="Paste your resume…" value={resume} onChange={setResume} />
+          <DropField
+            id="job-description"
+            label="Job description"
+            placeholder="Paste the job posting…"
+            value={jobDescription}
+            onChange={setJobDescription}
+          />
+          <p className="privacy">
+            <Icon name="lock" size={15} />
+            Stored on this computer only. The interviewer model sees what it needs to ask and grade.
+          </p>
+          {error === undefined ? null : <Notice message={error} />}
+          <button type="button" className="button primary large block" disabled={busy} onClick={start}>
+            {busy ? "Preparing your interview…" : "Start interview"} <Arrow />
+          </button>
+        </section>
       </div>
-    </section>
+    </>
   );
 }
 
 export function SetupPage({ api, interviewId }: { readonly api: ApiClient; readonly interviewId: string }): JSX.Element {
   const interviews = useLoad("interviews", api.interviews);
   return (
-    <Loading loadable={interviews.current} label="Loading interview…" onRetry={interviews.reload}>
+    <Loading loadable={interviews.current} label="Loading interview" onRetry={interviews.reload}>
       {(list) => {
         const interview = list.find((item) => item.id === interviewId);
         return interview === undefined ? (

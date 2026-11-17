@@ -3,21 +3,30 @@ import { useCallback, useState, type JSX } from "react";
 
 import type { ApiClient, ApiResult } from "../api.js";
 import { Debrief } from "../components/Debrief.js";
+import { Arrow, Icon } from "../components/Icon.js";
 import { Loading } from "../components/Loading.js";
-import { Notice, Spinner } from "../components/Notice.js";
+import { Notice } from "../components/Notice.js";
 import { QuestionCard } from "../components/QuestionCard.js";
 import { hrefFor } from "../route.js";
 import { useLoad } from "../use-load.js";
 
 function Ended({ view }: { readonly view: Extract<PracticeView, { kind: "abandoned" }> }): JSX.Element {
   return (
-    <section className="card">
+    <section className="ended">
+      <span className="icon-tile">
+        <Icon name="stop" size={22} />
+      </span>
       <p className="eyebrow">{view.role}</p>
-      <h1>This interview was stopped</h1>
-      <p className="muted">{view.reason}</p>
-      <a className="button primary" href={hrefFor({ page: "home" })}>
-        Back to interviews
-      </a>
+      <h1 className="display">This interview was stopped</h1>
+      <p className="muted">{view.reason} Nothing was scored. Start a fresh one whenever you are ready.</p>
+      <div className="hero-actions">
+        <a className="button primary" href={hrefFor({ page: "setup", interviewId: view.interviewId })}>
+          Start again <Arrow />
+        </a>
+        <a className="button ghost" href={hrefFor({ page: "home" })}>
+          All interviews
+        </a>
+      </div>
     </section>
   );
 }
@@ -54,7 +63,6 @@ function SessionView({ api, initial }: { readonly api: ApiClient; readonly initi
   return (
     <>
       {error === undefined ? null : <Notice message={error} />}
-      {busy ? <Spinner label="The interviewer is reading your answer…" /> : null}
       {view.kind === "question" ? (
         <QuestionCard key={view.number} view={view} busy={busy} onSubmit={onSubmit} onStop={onStop} />
       ) : null}
@@ -67,7 +75,7 @@ function SessionView({ api, initial }: { readonly api: ApiClient; readonly initi
 export function SessionPage({ api, sessionId }: { readonly api: ApiClient; readonly sessionId: string }): JSX.Element {
   const session = useLoad(sessionId, () => api.session(sessionId));
   return (
-    <Loading loadable={session.current} label="Loading your interview…" onRetry={session.reload}>
+    <Loading loadable={session.current} label="Loading your interview" onRetry={session.reload}>
       {(view) => <SessionView key={sessionId} api={api} initial={view} />}
     </Loading>
   );

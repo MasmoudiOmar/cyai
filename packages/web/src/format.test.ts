@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatDate, formatScore, formatSeconds, statusLabel, wordCount } from "./format.js";
+import { FORMATS, formatDate, formatScore, formatSeconds, humanize, isOpen, scoreTone, statusLabel, wordCount } from "./format.js";
 
 describe("format", () => {
   it("formats scores, durations, dates, statuses and word counts", () => {
@@ -13,5 +13,13 @@ describe("format", () => {
     expect(statusLabel("abandoned")).toBe("Stopped");
     expect(wordCount("  ")).toBe(0);
     expect(wordCount(" one two\nthree ")).toBe(3);
+  });
+
+  it("classifies sessions, scores, formats and ids", () => {
+    expect(isOpen("awaiting_evaluation")).toBe(true);
+    expect(isOpen("completed")).toBe(false);
+    expect([scoreTone(4), scoreTone(3.9), scoreTone(3), scoreTone(2.9)]).toEqual(["high", "mid", "mid", "low"]);
+    expect(FORMATS.async.icon).toBe("video");
+    expect(humanize("graduate-program-behavioral")).toBe("Graduate program behavioral");
   });
 });

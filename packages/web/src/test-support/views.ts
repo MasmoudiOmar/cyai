@@ -10,11 +10,15 @@ export const interview: InterviewSummary = {
   format: "live",
   totalMinutes: 25,
   maxQuestions: 2,
+  prepSeconds: 0,
+  softSeconds: 60,
+  hardSeconds: 90,
 };
 
 export const question: QuestionView = {
   kind: "question",
   sessionId: SESSION_ID,
+  interviewId: "ai-trainer-generalist",
   role: "AI Trainer",
   number: 1,
   maxQuestions: 2,
@@ -28,6 +32,7 @@ export const question: QuestionView = {
 export const completed: CompletedView = {
   kind: "completed",
   sessionId: SESSION_ID,
+  interviewId: "ai-trainer-generalist",
   role: "AI Trainer",
   scorecard: {
     criteria: [
@@ -52,7 +57,13 @@ export const completed: CompletedView = {
   ],
 };
 
-export const abandoned: AbandonedView = { kind: "abandoned", sessionId: SESSION_ID, role: "AI Trainer", reason: "Stopped in the web app." };
+export const abandoned: AbandonedView = {
+  kind: "abandoned",
+  sessionId: SESSION_ID,
+  interviewId: "ai-trainer-generalist",
+  role: "AI Trainer",
+  reason: "Stopped in the web app.",
+};
 
 export const session: SessionSummary = {
   sessionId: SESSION_ID,

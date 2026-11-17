@@ -1,6 +1,7 @@
 import type { JSX } from "react";
 
 import { formatSeconds } from "../format.js";
+import { Ring } from "./ScoreRing.js";
 
 export type TimerPhase = "prep" | "answer" | "overtime" | "over";
 
@@ -27,30 +28,53 @@ export function timerState(limits: Limits, elapsed: number): TimerState {
   return { phase, answering, prepLeft, hardLeft };
 }
 
-function caption(limits: Limits, state: TimerState): string {
+interface Face {
+  readonly digits: string;
+  readonly label: string;
+  readonly caption: string;
+  readonly progress: number;
+}
+
+function face(limits: Limits, state: TimerState): Face {
   switch (state.phase) {
     case "prep":
-      return `Preparation: ${formatSeconds(state.prepLeft)} left`;
+      return {
+        digits: formatSeconds(state.prepLeft),
+        label: "Prepare",
+        caption: "Gather your thoughts. The answer clock starts next.",
+        progress: 1 - state.prepLeft / limits.prepSeconds,
+      };
     case "answer":
-      return `${formatSeconds(state.answering)} of ${formatSeconds(limits.softSeconds)} suggested`;
+      return {
+        digits: formatSeconds(state.answering),
+        label: `of ${formatSeconds(limits.softSeconds)}`,
+        caption: `Aim for ${formatSeconds(limits.softSeconds)}. Cut-off at ${formatSeconds(limits.hardSeconds)}.`,
+        progress: state.answering / limits.hardSeconds,
+      };
     case "overtime":
-      return `Over the suggested time: ${formatSeconds(state.hardLeft)} until the cut-off`;
+      return {
+        digits: formatSeconds(state.hardLeft),
+        label: "left",
+        caption: "Over the suggested time: wrap up.",
+        progress: state.answering / limits.hardSeconds,
+      };
     case "over":
-      return "Time is up";
+      return { digits: "0:00", label: "time", caption: "Time is up", progress: 1 };
   }
 }
 
+/** A ring that follows the interviewer's clock: preparation, the suggested time, then the hard cut-off. */
 export function Timer({ limits, state }: { readonly limits: Limits; readonly state: TimerState }): JSX.Element {
-  const progress = Math.min(1, state.answering / limits.hardSeconds);
+  const { digits, label, caption, progress } = face(limits, state);
   return (
     <div className={`timer timer-${state.phase}`}>
-      <span role="timer" aria-live="off">
-        {caption(limits, state)}
-      </span>
-      <span className="timer-track" aria-hidden="true">
-        <span className="timer-fill" style={{ width: `${String(progress * 100)}%` }} />
-        <span className="timer-soft" style={{ left: `${String((limits.softSeconds / limits.hardSeconds) * 100)}%` }} />
-      </span>
+      <Ring progress={progress} size={150} stroke={8} gradient={state.phase === "answer"}>
+        <strong role="timer" aria-live="off">
+          {digits}
+        </strong>
+        <small>{label}</small>
+      </Ring>
+      <p className="timer-caption">{caption}</p>
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { useSyncExternalStore } from "react";
 /** Pages are addressed by the URL hash, so reloads and the back button work without server routes. */
 export type Route =
   | { readonly page: "home" }
+  | { readonly page: "history" }
   | { readonly page: "setup"; readonly interviewId: string }
   | { readonly page: "session"; readonly sessionId: string };
 
@@ -20,6 +21,9 @@ function decode(value: string): string | undefined {
 }
 
 export function parseRoute(hash: string): Route {
+  if (hash === "#/history") {
+    return { page: "history" };
+  }
   for (const [pattern, build] of PATTERNS) {
     const id = pattern.exec(hash)?.[1];
     const decoded = id === undefined ? undefined : decode(id);
@@ -34,6 +38,8 @@ export function hrefFor(route: Route): string {
   switch (route.page) {
     case "home":
       return "#/";
+    case "history":
+      return "#/history";
     case "setup":
       return `#/practice/${encodeURIComponent(route.interviewId)}`;
     case "session":
