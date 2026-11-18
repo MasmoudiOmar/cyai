@@ -15,6 +15,7 @@ const question: Extract<Reply, { kind: "question" }> = {
   maxQuestions: 5,
   text: "Why us?",
   followUp: true,
+  endsAt: at(1500),
   prepSeconds: 30,
   softSeconds: 90,
   hardSeconds: 120,

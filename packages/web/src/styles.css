@@ -1,74 +1,41 @@
 /* ───────────────────────── Tokens ───────────────────────── */
 
+/* One theme, Terminal: monospace throughout, phosphor amber on black, flat surfaces.
+   No glows and no colour gradients: the type and one accent carry the look. */
 :root {
-  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-display: "Instrument Serif", ui-serif, Georgia, serif;
-  --font-mono: "JetBrains Mono Variable", ui-monospace, "SFMono-Regular", monospace;
+  --font-sans: "JetBrains Mono Variable", ui-monospace, "SFMono-Regular", monospace;
+  --font-display: var(--font-sans);
+  --font-mono: var(--font-sans);
 
-  --bg: #08090f;
-  --bg-glow-a: rgb(124 108 255 / 22%);
-  --bg-glow-b: rgb(255 128 96 / 11%);
-  --bg-grid: rgb(255 255 255 / 3.5%);
-  --surface: rgb(255 255 255 / 3.5%);
-  --surface-2: rgb(255 255 255 / 6%);
-  --surface-solid: #11121c;
-  --border: rgb(255 255 255 / 8%);
-  --border-strong: rgb(255 255 255 / 15%);
-  --text: #f4f3fb;
-  --text-2: #a9a8c0;
-  --text-3: #6f6e88;
-  --accent: #9a8cff;
-  --accent-ink: #0b0a14;
-  --accent-soft: rgb(154 140 255 / 14%);
-  --coral: #ff8a6b;
-  --gradient: linear-gradient(120deg, #8b7cff 0%, #c77dff 48%, #ff8a6b 100%);
-  --success: #4ade9f;
-  --success-soft: rgb(74 222 159 / 13%);
-  --warning: #ffc164;
-  --warning-soft: rgb(255 193 100 / 13%);
-  --danger: #ff6b7a;
-  --danger-soft: rgb(255 107 122 / 13%);
-  --shadow: 0 1px 0 rgb(255 255 255 / 4%) inset, 0 24px 60px -24px rgb(0 0 0 / 60%);
-  --shadow-lift: 0 1px 0 rgb(255 255 255 / 6%) inset, 0 30px 80px -30px rgb(124 108 255 / 45%);
-  --radius-lg: 22px;
-  --radius: 16px;
-  --radius-sm: 11px;
+  --bg: #0a0a08;
+  --bg-grid: rgb(255 176 0 / 3%);
+  --surface: #11110d;
+  --surface-2: rgb(255 176 0 / 6%);
+  --surface-solid: #13130f;
+  --border: rgb(255 176 0 / 14%);
+  --border-strong: rgb(255 176 0 / 30%);
+  --text: #f3e6c4;
+  --text-2: #b8a77d;
+  --text-3: #7a6e52;
+  --accent: #ffb000;
+  --accent-ink: #0a0a08;
+  --accent-soft: rgb(255 176 0 / 12%);
+  --success: #7ee081;
+  --success-soft: rgb(126 224 129 / 12%);
+  --warning: #ffd166;
+  --warning-soft: rgb(255 209 102 / 12%);
+  --danger: #ff6b5b;
+  --danger-soft: rgb(255 107 91 / 12%);
+  --shadow: none;
+  --shadow-lift: 0 0 0 1px rgb(255 176 0 / 35%);
+  --radius-lg: 4px;
+  --radius: 3px;
+  --radius-sm: 2px;
   /* Strong curves: ease-out for entrances and feedback, ease-in-out for on-screen movement. */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --press: scale(0.97);
   color-scheme: dark;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    --bg: #f6f3ee;
-    --bg-glow-a: rgb(108 92 255 / 16%);
-    --bg-glow-b: rgb(255 120 80 / 12%);
-    --bg-grid: rgb(20 16 40 / 4%);
-    --surface: rgb(255 255 255 / 72%);
-    --surface-2: rgb(20 16 40 / 4%);
-    --surface-solid: #ffffff;
-    --border: rgb(20 16 40 / 9%);
-    --border-strong: rgb(20 16 40 / 16%);
-    --text: #16131f;
-    --text-2: #5a576e;
-    --text-3: #8d8aa1;
-    --accent: #5b4bff;
-    --accent-ink: #ffffff;
-    --accent-soft: rgb(91 75 255 / 10%);
-    --coral: #ef6543;
-    --gradient: linear-gradient(120deg, #5b4bff 0%, #a24bff 48%, #f0643f 100%);
-    --success: #12935f;
-    --success-soft: rgb(18 147 95 / 11%);
-    --warning: #b86e00;
-    --warning-soft: rgb(184 110 0 / 11%);
-    --danger: #d8314a;
-    --danger-soft: rgb(216 49 74 / 10%);
-    --shadow: 0 1px 2px rgb(20 16 40 / 5%), 0 18px 50px -24px rgb(20 16 40 / 22%);
-    --shadow-lift: 0 1px 2px rgb(20 16 40 / 5%), 0 28px 70px -28px rgb(91 75 255 / 38%);
-    color-scheme: light;
-  }
 }
 
 /* ───────────────────────── Base ───────────────────────── */
@@ -86,11 +53,7 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
-  background:
-    radial-gradient(60rem 36rem at 12% -8%, var(--bg-glow-a), transparent 70%),
-    radial-gradient(48rem 30rem at 95% 4%, var(--bg-glow-b), transparent 70%),
-    var(--bg);
-  background-attachment: fixed;
+  background: var(--bg);
   color: var(--text);
   font: 15.5px/1.6 var(--font-sans);
   font-feature-settings: "cv11", "ss01";
@@ -137,18 +100,14 @@ textarea {
 
 .display {
   font-family: var(--font-display);
-  font-weight: 400;
-  letter-spacing: -0.01em;
+  font-weight: 500;
+  letter-spacing: -0.04em;
   line-height: 1.04;
 }
 
 .display em {
-  font-style: italic;
-  background: var(--gradient);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  padding-right: 0.06em;
+  font-style: normal;
+  color: var(--accent);
 }
 
 .muted {
@@ -194,8 +153,7 @@ textarea {
   top: 0;
   z-index: 10;
   border-bottom: 1px solid var(--border);
-  background: color-mix(in srgb, var(--bg) 72%, transparent);
-  backdrop-filter: blur(18px) saturate(1.4);
+  background: var(--bg);
 }
 
 .topbar-inner,
@@ -228,16 +186,12 @@ textarea {
   width: 30px;
   height: 30px;
   border-radius: 9px;
-  background: var(--gradient);
-  box-shadow: 0 6px 20px -6px rgb(154 108 255 / 70%);
-  color: #fff;
+  background: var(--accent);
+  color: var(--accent-ink);
 }
 
 .brand-name span {
-  background: var(--gradient);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--accent);
 }
 
 .nav {
@@ -314,7 +268,6 @@ textarea {
   border-radius: var(--radius-lg);
   background: var(--surface);
   box-shadow: var(--shadow);
-  backdrop-filter: blur(14px);
 }
 
 .pad {
@@ -347,13 +300,12 @@ textarea {
 }
 
 .button.primary {
-  background: var(--gradient);
-  box-shadow: 0 10px 30px -12px rgb(170 110 255 / 75%);
-  color: #fff;
+  background: var(--accent);
+  color: var(--accent-ink);
 }
 
 .button.primary:not(:disabled):hover {
-  box-shadow: 0 16px 36px -12px rgb(170 110 255 / 85%);
+  background: color-mix(in srgb, var(--accent) 85%, white);
 }
 
 .button:not(:disabled):active,
@@ -462,7 +414,7 @@ textarea {
 }
 
 .icon-tile.async {
-  color: var(--coral);
+  color: var(--accent);
 }
 
 .icon-tile.chat {
@@ -575,17 +527,6 @@ textarea {
   transform: rotate(1.5deg);
   box-shadow: var(--shadow-lift);
   animation: float 7s ease-in-out infinite;
-}
-
-.preview::before {
-  position: absolute;
-  inset: -1px;
-  z-index: -1;
-  border-radius: inherit;
-  background: var(--gradient);
-  opacity: 0.35;
-  filter: blur(40px);
-  content: "";
 }
 
 .preview-head {
@@ -791,6 +732,7 @@ textarea {
 }
 
 .ring-value {
+  stroke: var(--accent);
   stroke-linecap: round;
   transition: stroke-dashoffset 600ms var(--ease-out);
 }
@@ -817,6 +759,10 @@ textarea {
 .ring-label strong {
   font-family: var(--font-display);
   font-weight: 400;
+}
+
+.ring.small .ring-value {
+  stroke: currentColor;
 }
 
 .ring.small .ring-label strong {
@@ -1028,8 +974,7 @@ textarea {
 }
 
 .steps span.current {
-  background: var(--gradient);
-  box-shadow: 0 0 14px rgb(170 110 255 / 60%);
+  background: var(--accent);
 }
 
 .stage {
@@ -1153,8 +1098,7 @@ textarea {
   justify-items: center;
   gap: 1rem;
   border-radius: inherit;
-  background: color-mix(in srgb, var(--bg) 70%, transparent);
-  backdrop-filter: blur(6px);
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
   text-align: center;
   animation: fade 240ms var(--ease-out) both;
 }
@@ -1163,44 +1107,127 @@ textarea {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: var(--gradient);
-  box-shadow: 0 0 40px rgb(170 110 255 / 60%);
+  background: radial-gradient(
+    circle at 35% 30%,
+    color-mix(in srgb, var(--accent) 60%, white),
+    var(--accent) 58%,
+    color-mix(in srgb, var(--accent) 65%, black)
+  );
   animation: breathe 1.8s ease-in-out infinite;
 }
 
 /* ───────────────────────── Voice ───────────────────────── */
 
-/* The interviewer's presence: the orb speaks, the ring around it follows your microphone. */
-.voice-presence {
-  position: relative;
+/* The spoken room is a video call: the interviewer's tile, yours with the answer clock beside it. */
+.call {
   display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: center;
   gap: 1rem;
-  margin-bottom: 1.25rem;
+  padding-bottom: 3rem;
 }
 
-.voice-presence .orb {
+.call-top,
+.call-title,
+.call-top-right {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+}
+
+.call-top {
+  justify-content: space-between;
+}
+
+.call-total,
+.call-rec {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--text-2);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.call-rec-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--danger);
+  animation: breathe 1.8s ease-in-out infinite;
+}
+
+.call-grid {
   position: relative;
-  z-index: 1;
-  grid-area: 1 / 1;
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 1rem;
+  border-radius: var(--radius-lg);
+}
+
+.call-side {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 1rem;
+}
+
+.call-tile {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 340px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-solid);
+  transition:
+    border-color 200ms ease,
+    box-shadow 200ms ease;
+  animation: rise 280ms var(--ease-out) both;
+}
+
+.call-you {
+  min-height: 170px;
+  animation-delay: 60ms;
+}
+
+.call-tile.speaking {
+  border-color: color-mix(in srgb, var(--accent) 70%, transparent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.orb.call-avatar {
+  width: 112px;
+  height: 112px;
   animation-duration: 3.2s;
 }
 
-.voice-presence.phase-asking .orb,
-.voice-presence.phase-nudging .orb {
+.call-interviewer.speaking .orb {
   animation-duration: 0.9s;
 }
 
-.voice-presence.phase-transcribing .orb,
-.voice-presence.phase-thinking .orb,
-.voice-presence.phase-failed .orb {
+.phase-transcribing .orb.call-avatar,
+.phase-thinking .orb.call-avatar,
+.phase-failed .orb.call-avatar {
   animation: none;
   opacity: 0.45;
 }
 
-.mic-level {
+/* Your microphone: the ring around it follows your level while the interviewer listens. */
+.call-mic {
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+
+.call-mic > * {
   grid-area: 1 / 1;
+}
+
+.mic-level {
   width: 56px;
   height: 56px;
   border: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
@@ -1216,28 +1243,66 @@ textarea {
   opacity: 1;
 }
 
-.presence-label {
-  color: var(--text-2);
-  font-size: 0.8rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+.call-mic .mic-level {
+  width: 88px;
+  height: 88px;
 }
 
-.phase-listening .presence-label {
+.call-name {
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.call-state {
+  color: var(--text-2);
+  font-weight: 500;
+}
+
+.phase-listening .call-state {
   color: var(--accent);
 }
 
-.voice-bar .answer-bar {
-  justify-content: flex-end;
+.call-timer {
+  display: grid;
+  place-items: center;
+  padding: 1.25rem 1rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-solid);
+  animation: rise 280ms var(--ease-out) 120ms both;
 }
 
-.voice-bar .answer-bar > :first-child {
-  margin-right: auto;
+.call-captions {
+  justify-self: center;
+  max-width: 46rem;
+  font-size: clamp(1.2rem, 2.2vw, 1.6rem);
+  line-height: 1.3;
+  text-align: center;
+  text-wrap: balance;
+  animation: fade 200ms ease both;
 }
 
-.voice-bar .notice {
-  margin: 1rem 1rem 0;
+.call-hint {
+  color: var(--text-3);
+  font-size: 0.84rem;
+  text-align: center;
+}
+
+.call-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
 }
 
 .system-check {
@@ -1302,19 +1367,6 @@ textarea {
   align-items: center;
   gap: clamp(1.5rem, 4vw, 3rem);
   overflow: hidden;
-}
-
-.result::after {
-  position: absolute;
-  top: -40%;
-  right: -10%;
-  z-index: -1;
-  width: 60%;
-  height: 160%;
-  background: var(--gradient);
-  opacity: 0.12;
-  filter: blur(70px);
-  content: "";
 }
 
 .result h1 {
@@ -1390,7 +1442,7 @@ textarea {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: var(--gradient);
+  background: var(--accent);
   animation: grow 700ms var(--ease-out) 180ms both;
   transform-origin: left;
 }
@@ -1569,6 +1621,8 @@ textarea {
   .content,
   .notice,
   .room .prompt,
+  .call-tile,
+  .call-timer,
   .turn details[open] > :not(summary) {
     animation: fade 200ms ease both;
   }
@@ -1660,6 +1714,14 @@ mark.filler {
 
   .stat:nth-child(n + 3) {
     border-top: 1px solid var(--border);
+  }
+
+  .call-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .call-tile {
+    min-height: 220px;
   }
 }
 

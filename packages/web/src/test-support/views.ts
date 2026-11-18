@@ -25,6 +25,7 @@ export const question: QuestionView = {
   maxQuestions: 2,
   text: "Tell me about a guideline you disagreed with.",
   followUp: false,
+  endsAt: at(1500),
   prepSeconds: 0,
   softSeconds: 60,
   hardSeconds: 90,

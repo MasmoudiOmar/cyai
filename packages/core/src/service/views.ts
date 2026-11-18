@@ -2,6 +2,7 @@ import type { AbandonedView, CompletedView, QuestionView, SessionIn } from "@cya
 
 import { interviewClock } from "../interview/clock.js";
 import type { InterviewContext } from "../interview/context.js";
+import { addMinutes } from "../shared/time.js";
 
 /** The question the candidate must answer now. */
 export function questionView(context: InterviewContext, session: SessionIn<"awaiting_answer">): QuestionView {
@@ -15,6 +16,7 @@ export function questionView(context: InterviewContext, session: SessionIn<"awai
     maxQuestions: turnPolicy.maxQuestions,
     text: session.pending.text,
     followUp: session.pending.followUpOf !== undefined,
+    endsAt: addMinutes(session.startedAt, context.profile.timing.totalMinutes),
     ...interviewClock(context.profile),
   };
 }

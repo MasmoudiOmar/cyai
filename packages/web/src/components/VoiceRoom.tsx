@@ -1,14 +1,14 @@
 import type { QuestionView, SpeechMeasurement } from "@cyai/spec";
-import { useEffect, useRef, useState, type JSX } from "react";
+import { useRef, useState, type JSX } from "react";
 
 import type { ApiClient } from "../api.js";
 import { formatSeconds } from "../format.js";
-import { TICK_MS } from "../use-elapsed.js";
+import { useNow } from "../use-elapsed.js";
 import type { VoiceIO } from "../voice/io.js";
 import { useSpokenTurn, type SpokenPhase } from "../voice/use-spoken-turn.js";
 import { Icon } from "./Icon.js";
 import { Notice } from "./Notice.js";
-import { EndButton, FollowUpPill, RoomHeader, Thinking } from "./Room.js";
+import { EndButton, FollowUpPill, Thinking } from "./Room.js";
 import { Timer, timerState } from "./Timer.js";
 
 const PHASE_LABELS: Readonly<Record<SpokenPhase, string>> = {
@@ -20,21 +20,10 @@ const PHASE_LABELS: Readonly<Record<SpokenPhase, string>> = {
   failed: "Audio stopped",
 };
 
-/** Seconds since `start`, ticking while `running`. */
-function useSecondsSince(start: number | undefined, running: boolean): number | undefined {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    if (start === undefined || !running) {
-      return undefined;
-    }
-    const timer = setInterval((): void => {
-      setNow(Date.now());
-    }, TICK_MS);
-    return (): void => {
-      clearInterval(timer);
-    };
-  }, [start, running]);
-  return start === undefined ? undefined : Math.max(0, (now - start) / 1000);
+/** Seconds since `start`, frozen while not `running`. */
+function useSecondsSince(start: number | undefined, running: boolean): number {
+  const now = useNow(start !== undefined && running);
+  return start === undefined ? 0 : Math.max(0, (now - start) / 1000);
 }
 
 function hintFor(view: QuestionView): string {
@@ -46,6 +35,17 @@ function hintFor(view: QuestionView): string {
     case "submit":
       return `Answer out loud. Recording stops at ${formatSeconds(view.hardSeconds)}, or when you click Done.`;
   }
+}
+
+/** Time left in the whole interview, from the budget the server set. */
+function InterviewClock({ endsAt }: { readonly endsAt: string }): JSX.Element {
+  const now = useNow();
+  return (
+    <span className="call-total">
+      <Icon name="clock" size={15} />
+      {formatSeconds((Date.parse(endsAt) - now) / 1000)} left in interview
+    </span>
+  );
 }
 
 interface VoiceRoomProps {
@@ -60,9 +60,9 @@ interface VoiceRoomProps {
 }
 
 /**
- * A spoken question, run the way voice screeners run it: the question is heard rather than
- * read (captions are optional and off for conversational interviews), and the answer ends on
- * a long pause or when the recording window closes.
+ * A spoken question, laid out as the video call voice screeners run: the interviewer's tile,
+ * yours beside it with the answer clock, captions off by default for conversational
+ * interviews, and the answer ending on a long pause or when the recording window closes.
  */
 export function VoiceRoom({ view, voice, api, busy, onAnswer, onStop, onType }: VoiceRoomProps): JSX.Element {
   const meter = useRef<HTMLSpanElement | null>(null);
@@ -70,53 +70,78 @@ export function VoiceRoom({ view, voice, api, busy, onAnswer, onStop, onType }: 
   const [captions, setCaptions] = useState(view.turnTaking.endOfTurn !== "silence");
   const answering = turn.phase === "prep" || turn.phase === "listening" || turn.phase === "nudging";
   const elapsed = useSecondsSince(turn.clockStartedAt, answering && !busy);
-  const label = busy ? "Evaluating" : PHASE_LABELS[turn.phase];
+  const phase = busy ? "thinking" : turn.phase;
+  const interviewerSpeaking = phase === "asking" || phase === "nudging";
+  const recording = phase === "listening" || phase === "nudging";
 
   return (
-    <div className="room">
-      <RoomHeader view={view} />
-      <section className="card pad stage" aria-labelledby="question-text">
-        <div className="prompt">
+    <div className={`call phase-${phase}`}>
+      <header className="call-top">
+        <span className="call-title">
+          <span className="eyebrow">
+            {view.role} · Question {view.number} of up to {view.maxQuestions}
+          </span>
           <FollowUpPill view={view} />
-          <div className={`voice-presence phase-${busy ? "thinking" : turn.phase}`}>
-            <span className="orb" />
-            <span className="mic-level" ref={meter} />
-            <span className="presence-label" role="status">
-              {label}
+        </span>
+        <span className="call-top-right">
+          <InterviewClock endsAt={view.endsAt} />
+          {recording ? (
+            <span className="call-rec">
+              <span className="call-rec-dot" /> Recording
             </span>
-          </div>
-          <h1 id="question-text" className={captions ? "display" : "sr-only"}>
-            {view.text}
-          </h1>
-          <p className="hint">{hintFor(view)}</p>
-        </div>
-        {elapsed === undefined ? null : <Timer limits={view} state={timerState(view, elapsed)} />}
-      </section>
+          ) : null}
+        </span>
+      </header>
 
-      <section className="card answer voice-bar">
-        {turn.error === undefined ? null : (
-          <Notice message={turn.error} onRetry={onType} retryLabel="Type this answer instead" />
-        )}
-        <div className="answer-bar">
-          <button
-            type="button"
-            className="button ghost"
-            aria-pressed={captions}
-            onClick={() => {
-              setCaptions((shown) => !shown);
-            }}
-          >
-            <Icon name="captions" size={16} /> {captions ? "Hide captions" : "Show captions"}
-          </button>
-          <EndButton busy={busy} onStop={onStop} />
-          {view.turnTaking.endOfTurn === "silence" ? null : (
-            <button type="button" className="button primary" disabled={turn.phase !== "listening" || busy} onClick={turn.finish}>
-              Done <Icon name="check" size={16} />
-            </button>
-          )}
+      <div className="call-grid">
+        <section className={`call-tile call-interviewer${interviewerSpeaking ? " speaking" : ""}`} aria-label="Interviewer">
+          <span className="orb call-avatar" />
+          <span className="call-name">
+            AI interviewer
+            <span className="call-state" role="status">
+              {busy ? "Evaluating" : PHASE_LABELS[turn.phase]}
+            </span>
+          </span>
+        </section>
+        <div className="call-side">
+          <section className={`call-tile call-you${recording ? " speaking" : ""}`} aria-label="You">
+            <span className="call-mic">
+              <span className="mic-level" ref={meter} />
+              <Icon name="live" size={30} />
+            </span>
+            <span className="call-name">You</span>
+          </section>
+          <section className="call-timer" aria-label="Answer time">
+            <Timer limits={view} state={timerState(view, elapsed)} />
+          </section>
         </div>
         {busy ? <Thinking /> : null}
-      </section>
+      </div>
+
+      <h1 id="question-text" className={captions ? "display call-captions" : "sr-only"}>
+        {view.text}
+      </h1>
+      <p className="call-hint">{hintFor(view)}</p>
+      {turn.error === undefined ? null : <Notice message={turn.error} onRetry={onType} retryLabel="Type this answer instead" />}
+
+      <footer className="call-controls">
+        <button
+          type="button"
+          className="button ghost"
+          aria-pressed={captions}
+          onClick={() => {
+            setCaptions((shown) => !shown);
+          }}
+        >
+          <Icon name="captions" size={16} /> {captions ? "Hide captions" : "Show captions"}
+        </button>
+        {view.turnTaking.endOfTurn === "silence" ? null : (
+          <button type="button" className="button primary" disabled={turn.phase !== "listening" || busy} onClick={turn.finish}>
+            Done <Icon name="check" size={16} />
+          </button>
+        )}
+        <EndButton busy={busy} onStop={onStop} />
+      </footer>
     </div>
   );
 }

@@ -67,6 +67,7 @@ describe("practice service", () => {
       maxQuestions: 2,
       text: "Tell me about a time you followed a guideline you disagreed with.",
       followUp: false,
+      endsAt: at(25 * 60),
       prepSeconds: 0,
       softSeconds: 120,
       hardSeconds: 180,

@@ -15,6 +15,11 @@ export function elapsedMs(from: IsoDateTime, to: IsoDateTime): number {
   return Date.parse(to) - Date.parse(from);
 }
 
+/** `from` plus `minutes`, as an ISO timestamp. */
+export function addMinutes(from: IsoDateTime, minutes: number): IsoDateTime {
+  return new Date(Date.parse(from) + minutes * MS_PER_MINUTE).toISOString();
+}
+
 /** Classifies an answer duration against the profile's soft and hard limits. */
 export function classifyOvertime(durationMs: number, limits: AnswerLimits): Overtime {
   if (durationMs > limits.hardSeconds * MS_PER_SECOND) {

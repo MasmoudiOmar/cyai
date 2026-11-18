@@ -79,7 +79,7 @@ describe("VoiceRoom", () => {
   it("records one-way answers after the prep time until Done", async () => {
     const voice = fakeVoice({ levels: talking(100), heard: "My answer." });
     const { onAnswer } = setup(voice, recordedQuestion);
-    expect(screen.getByRole("heading", { name: recordedQuestion.text }).className).toBe("display");
+    expect(screen.getByRole("heading", { name: recordedQuestion.text }).className).toBe("display call-captions");
     const done = screen.getByRole("button", { name: /Done/ });
     await elapse(0);
     expect([label(), done.hasAttribute("disabled")]).toEqual(["Prepare your answer", true]);
@@ -123,7 +123,7 @@ describe("VoiceRoom", () => {
     const { onStop } = setup(fakeVoice({ holdLine: spokenQuestion.text }), spokenQuestion, undefined, true);
     const toggle = screen.getByRole("button", { name: /Show captions/ });
     fireEvent.click(toggle);
-    expect(screen.getByRole("heading", { name: spokenQuestion.text }).className).toBe("display");
+    expect(screen.getByRole("heading", { name: spokenQuestion.text }).className).toBe("display call-captions");
     expect(toggle.getAttribute("aria-pressed")).toBe("true");
     fireEvent.click(screen.getByRole("button", { name: /Hide captions/ }));
     expect(screen.getAllByRole("status").map((element) => element.textContent)).toContain("Evaluating");

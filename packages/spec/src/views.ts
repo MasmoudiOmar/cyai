@@ -61,6 +61,8 @@ export const questionViewSchema = z.strictObject({
   maxQuestions: z.int().positive(),
   text: textSchema,
   followUp: z.boolean(),
+  /** When the interview's time budget runs out; no new question is asked after it. */
+  endsAt: isoDateTimeSchema,
   ...timingShape,
 });
 export type QuestionView = z.infer<typeof questionViewSchema>;

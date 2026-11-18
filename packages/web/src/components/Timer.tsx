@@ -68,7 +68,7 @@ export function Timer({ limits, state }: { readonly limits: Limits; readonly sta
   const { digits, label, caption, progress } = face(limits, state);
   return (
     <div className={`timer timer-${state.phase}`}>
-      <Ring progress={progress} size={150} stroke={8} gradient={state.phase === "answer"}>
+      <Ring progress={progress} size={150} stroke={8}>
         <strong role="timer" aria-live="off">
           {digits}
         </strong>

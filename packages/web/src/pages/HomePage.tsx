@@ -28,7 +28,7 @@ function Preview(): JSX.Element {
           <span />
           <span />
         </span>
-        <Ring progress={0.42} size={92} stroke={7} gradient className="timer">
+        <Ring progress={0.42} size={92} stroke={7} className="timer">
           <strong>0:51</strong>
         </Ring>
       </div>

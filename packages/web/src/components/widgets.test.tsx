@@ -52,13 +52,12 @@ describe("rings and icons", () => {
     const { container } = render(
       <>
         <Ring progress={2} size={20} stroke={2} />
-        <Ring progress={-1} size={20} stroke={2} gradient className="x" />
+        <Ring progress={-1} size={20} stroke={2} className="x" />
       </>,
     );
     const values = [...container.querySelectorAll<SVGCircleElement>(".ring-value")].map((circle) => circle.style.strokeDashoffset);
     expect(values[0]).toBe("0");
     expect(Number(values[1])).toBeGreaterThan(0);
-    expect(container.querySelectorAll("linearGradient")).toHaveLength(1);
   });
 
   it("tints small score rings and labels large ones", () => {
