@@ -6,6 +6,11 @@ export function formatScore(value: number): string {
   return value.toFixed(1);
 }
 
+/** Rounds to one decimal place, so rates read "2.7", never "2.7272727272727275". */
+export function oneDecimal(value: number): number {
+  return Math.round(value * 10) / 10;
+}
+
 export function formatSeconds(total: number): string {
   const seconds = Math.max(0, Math.ceil(total));
   return `${String(Math.floor(seconds / 60))}:${String(seconds % 60).padStart(2, "0")}`;

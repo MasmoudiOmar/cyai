@@ -1,6 +1,7 @@
 import type { DeliveryMetrics } from "@cyai/spec";
 import type { JSX } from "react";
 
+import { oneDecimal } from "../format.js";
 import { fillerSegments, rateFillers, rateLatency, ratePace, ratePause, type DeliverySummary, type Rated } from "../delivery.js";
 
 function seconds(ms: number): string {
@@ -15,8 +16,8 @@ interface Metric {
 
 function metrics(summary: Pick<DeliverySummary, "wordsPerMinute" | "fillersPerMinute" | "longestPauseMs">, latencyMs: number): Metric[] {
   return [
-    { label: "Pace", value: `${String(summary.wordsPerMinute)} wpm`, rated: ratePace(summary.wordsPerMinute) },
-    { label: "Fillers", value: `${String(summary.fillersPerMinute)}/min`, rated: rateFillers(summary.fillersPerMinute) },
+    { label: "Pace", value: `${String(Math.round(summary.wordsPerMinute))} wpm`, rated: ratePace(summary.wordsPerMinute) },
+    { label: "Fillers", value: `${String(oneDecimal(summary.fillersPerMinute))}/min`, rated: rateFillers(summary.fillersPerMinute) },
     { label: "Longest pause", value: seconds(summary.longestPauseMs), rated: ratePause(summary.longestPauseMs) },
     { label: "Time to start", value: seconds(latencyMs), rated: rateLatency(latencyMs) },
   ];

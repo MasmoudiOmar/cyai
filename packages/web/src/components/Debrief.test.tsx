@@ -108,6 +108,12 @@ describe("delivery in the debrief", () => {
     expect(screen.queryByText(/drops many fillers/)).toBeNull();
   });
 
+  it("rounds the rates it shows, whatever precision they were stored with", () => {
+    render(<Debrief view={spokenResult({ ...delivery, wordsPerMinute: 137.46, fillersPerMinute: 2.7272727272727275 }, "I escalated.")} />);
+    expect(screen.getByText("Pace · 137 wpm")).toBeDefined();
+    expect(screen.getByText("Fillers · 2.7/min")).toBeDefined();
+  });
+
   it("is absent for typed interviews", () => {
     render(<Debrief view={completed} />);
     expect(screen.queryByRole("region", { name: "Delivery" })).toBeNull();

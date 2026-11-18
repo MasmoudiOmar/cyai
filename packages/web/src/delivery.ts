@@ -1,6 +1,6 @@
 import { fillerAt, spokenWords, type DeliveryMetrics, type EvaluatedTurn, type FillerCount, type Transcriber } from "@cyai/spec";
 
-import type { Tone } from "./format.js";
+import { oneDecimal, type Tone } from "./format.js";
 
 /** Delivery across every spoken answer of an interview. */
 export interface DeliverySummary {
@@ -12,10 +12,6 @@ export interface DeliverySummary {
   readonly averageLatencyMs: number;
   /** "browser" when any answer was transcribed by the browser, whose filler counts are a lower bound. */
   readonly transcriber: Transcriber;
-}
-
-function round(value: number): number {
-  return Math.round(value * 10) / 10;
 }
 
 /** Speaking minutes behind one answer's pace, recovered from its word count. */
@@ -39,7 +35,7 @@ export function summarizeDelivery(turns: readonly EvaluatedTurn[]): DeliverySumm
   return {
     answers: spoken.length,
     wordsPerMinute: minutes === 0 ? 0 : Math.round(words / minutes),
-    fillersPerMinute: minutes === 0 ? 0 : round(fillerTotal / minutes),
+    fillersPerMinute: minutes === 0 ? 0 : oneDecimal(fillerTotal / minutes),
     fillers: fillerCounts,
     longestPauseMs: Math.max(...spoken.map((delivery) => delivery.longestPauseMs)),
     averageLatencyMs: Math.round(spoken.reduce((sum, delivery) => sum + delivery.latencyMs, 0) / spoken.length),
